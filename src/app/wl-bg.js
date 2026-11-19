@@ -20,6 +20,16 @@ function h(tag, attrs, ...kids) {
   return el;
 }
 
+// Resolve /app/ assets from THIS script's own URL, so the backdrop works whether
+// the site is served at the domain root or under a project path (e.g. /eagleeye-content/).
+var ABASE = (function () {
+  try {
+    var ss = document.getElementsByTagName("script");
+    for (var i = ss.length - 1; i >= 0; i--) { if (/wl-bg\.js(\?|$)/.test(ss[i].src)) return new URL(".", ss[i].src).href; }
+  } catch (e) {}
+  return "/app/";
+})();
+
 function motionOff() {
   return document.documentElement.classList.contains("no-motion") ||
     (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);

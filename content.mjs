@@ -4,21 +4,9 @@
 // noted in comments; the prose stays in Eagle Eye's voice.
 const sec = (inner) => `<section class="wl-sec"><div class="wl-prose">${inner}</div></section>`;
 
-// FAQPage schema from the extra Q&As (plus the on-page ones already rendered).
-const extraFaq = [
-  ['What is geo-grid rank tracking?', 'Instead of one rank for a keyword, Eagle Eye lays a grid of points over a business’s neighbourhood and runs a real Google Maps or Apple Maps search from each one. You see your rank street by street, because local results change with every block the searcher stands on.'],
-  ['What grid sizes can I run?', 'From 9 × 9 up to 21 × 21 points. Sizes are always odd so the business sits on the exact centre point, with the same number of points on every side. A 21 × 21 grid is 441 searches in one sweep.'],
-  ['Can I limit the scan to an area?', 'Yes. Set a radius from 0.1 mile and up, in miles or kilometres, and shape the scan as a square, a circle, or an area you draw. Points outside the shape are not searched and not charged.'],
-  ['What alerts can I set?', 'Eagle Eye flags a fall in LSOV, a worsening rank, grid points dropping out of the top 20, or a rival taking the top 3 — as soon as a scan finds it, before the client does.'],
-  ['What can I export?', 'A scan’s listings as CSV, your reports as PDF or CSV, and a time-lapse GIF of every run of a scan. Reports carry your own logo, colours and footer.'],
-  ['Who can I add to an account?', 'Each organisation has owners, admins and members, and API keys so you can start scans and read results from your own code. Agencies keep one organisation per client, with a single credit balance paying for all.'],
-];
-const faqSchema = {
-  '@context': 'https://schema.org', '@type': 'FAQPage',
-  mainEntity: extraFaq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
-};
-const faqDetails = extraFaq.map(([q, a]) =>
-  `<details class="wl-q"><summary><span>${q}</span><i class="wl-plus" aria-hidden="true"></i></summary><p>${a}</p></details>`).join('');
+// NOTE: per-page AEO FAQ (on-page accordion + FAQPage schema) now lives in faqs.mjs and is
+// merged by build.mjs for EVERY page, including /faq. The former inline /faq Q&A block and its
+// faqSchema/faqDetails helpers were removed to avoid a duplicate FAQ section and duplicate schema.
 
 export default {
   // keywords: geo-grid local rank tracking, local map rank tracker, Google & Apple Maps
@@ -70,11 +58,9 @@ export default {
     <h2>One point, one search, one credit</h2>
     <p>Eagle Eye pricing is simple: every plan is a bucket of credits, and a scan spends one credit per grid point. A 9 × 9 scan is 81 credits; a 21 × 21 scan is 441. Points you switch off or cut outside a shape cost nothing, and a scan that can’t start is refunded. <b>Credits you buy never expire.</b> A new organisation starts with 10 free scans, and your first scan of your own website is free at any size up to 21 × 21. Set a grid and a rhythm below to see the cost and the plan that fits.</p>`) },
 
-  // keywords: local rank tracking FAQ (long-tail)
-  '/faq/': {
-    afterHtml: sec(`<h2>More questions</h2>`) + `<section class="wl-sec wl-faqsec"><div class="wl-faq">${faqDetails}</div></section>`
-      + `<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>`,
-  },
+  // keywords: local rank tracking FAQ (long-tail) — body is the merged faqs.mjs accordion.
+  '/faq/': { introHtml: sec(`<h2>Everything asked before you sign up</h2>
+    <p>The questions new users ask most, answered straight. Anything more specific is in the user guide inside the app, and your <a href="/pricing/">first scan of your own site is free</a> at any size.</p>`) },
 
   // keywords: Google Maps rank tracking, Google Maps local SEO, geo-grid Google
   '/google-maps-rank-tracking/': { introHtml: sec(`
@@ -605,4 +591,100 @@ export default {
     <h3>Credit</h3><p>The unit a scan spends: one credit per grid point searched. An 81-point scan costs 81 credits; a 441-point scan costs 441. <a href="/pricing/">Credits never expire</a>.</p>
     <h3>Time-lapse</h3><p>Every run of a scan stitched into a short GIF, so a month of movement reads at a glance.</p>
     <p>Ready to see it on a real business? <a href="/how-it-works/">How Eagle Eye works</a>.</p>`) },
+
+  '/local-seo-for-plumbers/': { introHtml: sec(`
+    <h2>The first name on the map gets the call</h2>
+    <p>A burst pipe doesn’t wait — the searcher taps “plumber near me” and calls whoever sits at the top of the map, right where they’re standing. Eagle Eye shows a plumbing business its rank across the whole service area, block by block, and which rival is taking the jobs it misses.</p>
+    <h3>What a scan tells a plumber</h3>
+    <ul>
+      <li><b>Rank at every point</b> of the service area — a grid of up to 441 points, not one pin.</li>
+      <li><b>LSOV, ARP and ATRP</b> — <a href="/the-numbers/">how much of the area</a> finds the business in the top 3.</li>
+      <li><b>Competitor maps</b> — which plumbers win the blocks you don’t.</li>
+      <li><b>Both maps</b> — <a href="/google-maps-rank-tracking/">Google</a> and <a href="/apple-maps-rank-tracking/">Apple</a>, since emergency searches run on both.</li>
+    </ul>
+    <p>Service-area business with no storefront? That’s exactly where <a href="/local-seo-for-home-services/">geo-grid tracking</a> matters most. <a href="/pricing/">See the plans</a>.</p>`) },
+
+  '/local-seo-for-accountants/': { introHtml: sec(`
+    <h2>Tax season picks the firm it can find</h2>
+    <p>“Accountant near me,” “CPA near me,” “tax preparation” — the search for a numbers person happens on the map, and the answer changes across a city. Eagle Eye shows an accounting firm exactly where it ranks across its catchment and which competing practice is being found instead.</p>
+    <h3>What a scan tells an accounting firm</h3>
+    <ul>
+      <li><b>Rank across the whole city</b> — a grid of real search points, not a single position.</li>
+      <li><b>LSOV</b> — the share of the area that sees the firm in the top 3.</li>
+      <li><b>Competitor maps</b> — the rival firms taking the searches you’re missing, point by point.</li>
+      <li><b>Branded reports</b> — a clean map and the numbers, with the firm’s own branding.</li>
+    </ul>
+    <p>More than one office? <a href="/multi-location-rank-tracking/">Track each on its own grid</a>. <a href="/pricing/">See what it costs</a>.</p>`) },
+
+  '/local-seo-for-physical-therapy/': { introHtml: sec(`
+    <h2>Patients book the clinic they find first</h2>
+    <p>Someone searches “physical therapy near me” or “sports physio” and chooses from the map. Eagle Eye shows a PT clinic where it ranks across its catchment — street by street — and where a competing clinic is winning the patients it should be seeing.</p>
+    <h3>What a scan tells a PT clinic</h3>
+    <ul>
+      <li><b>Rank at every point</b> patients actually search from across the catchment.</li>
+      <li><b>LSOV, ARP and ATRP</b> — <a href="/the-numbers/">how much of the area</a> finds the clinic near the top.</li>
+      <li><b>Competitor maps</b> — which clinics win the blocks you don’t.</li>
+      <li><b>Patient-ready branded reports</b> — a clean map and the numbers, with the clinic’s own branding.</li>
+    </ul>
+    <p>Several locations? <a href="/multi-location-rank-tracking/">Track each on its own grid</a>. <a href="/pricing/">See the plans</a>.</p>`) },
+
+  '/local-seo-for-optometrists/': { introHtml: sec(`
+    <h2>“Eye doctor near me” is decided on the map</h2>
+    <p>A new patient searching for an optometrist or eye exam picks from the map results where they’re standing — and that order changes block by block. Eagle Eye shows an eye-care practice its rank across the whole area and which competitor is taking the searches it misses.</p>
+    <h3>What a scan tells an eye-care practice</h3>
+    <ul>
+      <li><b>Rank across the whole area</b> — a grid of up to 441 points, not one pin.</li>
+      <li><b>LSOV</b> — the share of the neighbourhood that sees the practice in the top 3.</li>
+      <li><b>Competitor maps</b> — the rival practices winning the blocks you don’t.</li>
+      <li><b>Both maps</b> — <a href="/google-maps-rank-tracking/">Google</a> and <a href="/apple-maps-rank-tracking/">Apple</a>.</li>
+    </ul>
+    <p>Put it on a <a href="/scheduled-rank-tracking/">schedule</a> and watch the map move as the listing is tuned. <a href="/pricing/">See what it costs</a>.</p>`) },
+
+  '/local-seo-for-barbers/': { introHtml: sec(`
+    <h2>A fresh cut is a map search away</h2>
+    <p>“Barber near me,” “fade,” “walk-in haircut” — a new client finds a shop on the map and books whoever ranks where they are. Eagle Eye shows a barbershop exactly which blocks find it first and which hand the chair to the shop down the street.</p>
+    <h3>What a scan tells a barbershop</h3>
+    <ul>
+      <li><b>Rank across the neighbourhood</b> — a grid of real search points, not one position.</li>
+      <li><b>LSOV</b> — the share of the area that sees the shop in the top 3.</li>
+      <li><b>A competitor map</b> — the rival shops taking the walk-ins you’re missing, point by point.</li>
+      <li><b>Both maps</b> — <a href="/google-maps-rank-tracking/">Google</a> and <a href="/apple-maps-rank-tracking/">Apple</a>.</li>
+    </ul>
+    <p>Run it on a <a href="/scheduled-rank-tracking/">schedule</a> to watch the map move as reviews come in. <a href="/pricing/">See the plans</a>.</p>`) },
+
+  '/local-seo-for-florists/': { introHtml: sec(`
+    <h2>Same-day flowers go to whoever ranks nearby</h2>
+    <p>“Florist near me,” “flower delivery,” “birthday bouquet” — the order goes to whoever shows up on the map where the buyer is. Eagle Eye shows a florist its rank across the whole delivery area, block by block, and which rival is winning the orders it misses.</p>
+    <h3>What a scan tells a florist</h3>
+    <ul>
+      <li><b>Rank across the delivery area</b> — a grid of up to 441 points, not one pin.</li>
+      <li><b>LSOV, ARP and ATRP</b> — <a href="/the-numbers/">how much of the area</a> finds the shop near the top.</li>
+      <li><b>Competitor maps</b> — which florists win the blocks you don’t.</li>
+      <li><b>Branded reports</b> — a clean map and the numbers, with the shop’s own branding.</li>
+    </ul>
+    <p>Covering several ZIPs? <a href="/multi-location-rank-tracking/">Track each on its own grid</a>. <a href="/pricing/">See what it costs</a>.</p>`) },
+
+  '/local-seo-for-self-storage/': { introHtml: sec(`
+    <h2>Renters pick the facility they find nearby</h2>
+    <p>“Storage units near me,” “self storage,” “climate controlled storage” — a renter chooses from the map results closest to them. Eagle Eye shows a storage facility where it ranks across its whole catchment and which competing facility is being found instead.</p>
+    <h3>What a scan tells a storage facility</h3>
+    <ul>
+      <li><b>Rank across the catchment</b> — a grid of real search points, not one position.</li>
+      <li><b>LSOV</b> — the share of the area that sees the facility in the top 3.</li>
+      <li><b>A competitor map</b> — the rival facilities taking the rentals you’re missing, point by point.</li>
+      <li><b>Both maps</b> — <a href="/google-maps-rank-tracking/">Google</a> and <a href="/apple-maps-rank-tracking/">Apple</a>.</li>
+    </ul>
+    <p>Running several sites? <a href="/multi-location-rank-tracking/">Track each on its own grid</a>. <a href="/pricing/">See the plans</a>.</p>`) },
+
+  '/local-seo-for-locksmiths/': { introHtml: sec(`
+    <h2>A lockout call goes to the first name on the map</h2>
+    <p>Locked out of a car or a house, the searcher taps “locksmith near me” and calls whoever tops the map where they’re stranded. Eagle Eye shows a locksmith its rank across the whole service area, block by block, and which rival is taking the emergency calls it misses.</p>
+    <h3>What a scan tells a locksmith</h3>
+    <ul>
+      <li><b>Rank at every point</b> of the service area — a grid of up to 441 points, not one pin.</li>
+      <li><b>LSOV, ARP and ATRP</b> — <a href="/the-numbers/">how much of the area</a> finds the business in the top 3.</li>
+      <li><b>Competitor maps</b> — which locksmiths win the blocks you don’t.</li>
+      <li><b>Both maps</b> — <a href="/google-maps-rank-tracking/">Google</a> and <a href="/apple-maps-rank-tracking/">Apple</a>, since emergency searches run on both.</li>
+    </ul>
+    <p>No storefront, pure service area? That’s where <a href="/local-seo-for-home-services/">geo-grid tracking</a> matters most. <a href="/pricing/">See what it costs</a>.</p>`) },
 };

@@ -4,7 +4,8 @@
 // + real section markup from audit/capture/fragments). No invented design, no new claims.
 // Phase 1 = structural split from REAL content. Enrichment copy is layered in CONTENT below.
 import { readFile, writeFile, mkdir, cp, rm } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,6 +16,10 @@ const DIST = join(ROOT, 'dist');
 const ORIGIN = 'https://eagleeye.sgen.com';
 const APP = ORIGIN + '/app';           // real app (signup/login) stays on /app
 const OGIMG = ORIGIN + '/app/og-eagleeye.png';
+// Asset cache-bust: GitHub Pages serves /app/*.css with max-age=600, so a CSS fix can
+// show stale on an edge for up to 10 min. Version the stylesheet URL off the pages.css
+// content hash — a change mints a new URL the CDN has never cached, so the fix is instant.
+const ASSETVER = createHash('sha1').update(readFileSync(join(ROOT, 'src/app/pages.css'))).digest('hex').slice(0, 10);
 
 const readFrag = async (f) => existsSync(join(FRG, f)) ? await readFile(join(FRG, f), 'utf8') : '';
 const shell = JSON.parse(await readFile(join(FRG, '_shell.json'), 'utf8'));
@@ -83,12 +88,23 @@ const VERTICALS = [
   ["/local-seo-for-coffee-shops/", "Coffee shops"],
   ["/local-seo-for-insurance-agents/", "Insurance agents"],
   ["/local-seo-for-moving-companies/", "Moving companies"],
+  ["/local-seo-for-plumbers/", "Plumbers"],
+  ["/local-seo-for-accountants/", "Accountants & CPAs"],
+  ["/local-seo-for-physical-therapy/", "Physical therapy"],
+  ["/local-seo-for-optometrists/", "Optometrists"],
+  ["/local-seo-for-barbers/", "Barbershops"],
+  ["/local-seo-for-florists/", "Florists"],
+  ["/local-seo-for-self-storage/", "Self-storage"],
+  ["/local-seo-for-locksmiths/", "Locksmiths"],
 ];
 const ALLSET = [...NAVSET, ...SOLUTIONS, ...LEARN, ...TRACKING, ...VERTICALS];
 
 // Enrichment copy (Phase 2) is authored per-page in content.mjs and merged here.
 let CONTENT = {};
 if (existsSync(join(ROOT, 'content.mjs'))) CONTENT = (await import('./content.mjs')).default;
+// Per-page AEO FAQ sets (faqs.mjs) — merged per slug; renders an on-page accordion + FAQPage schema.
+let FAQS = {};
+if (existsSync(join(ROOT, 'faqs.mjs'))) FAQS = (await import('./faqs.mjs')).default;
 let caseStudyPages = () => [];
 if (existsSync(join(ROOT, 'casestudies.mjs'))) ({ caseStudyPages } = await import('./casestudies.mjs'));
 
@@ -98,7 +114,7 @@ const PAGES = [
     desc: 'See where a business ranks on Google and Apple Maps, point by point across its whole area: geo-grid rank tracking, competitor maps and branded reports.',
     h1: 'Every street has a #1. Make it you.',
     lede: 'Eagle Eye searches Google Maps and Apple Maps from every corner of a business’s neighbourhood and maps it all: where it wins, where it disappears, and exactly who’s taking its customers. No guesswork, just the receipts.',
-    sections: ['point-at-any-street'], home: true },
+    sections: [], home: true },
   { slug: '/how-it-works/', file: 'how-it-works/index.html',
     title: 'How Eagle Eye Works — Prove Local SEO to Every Client',
     desc: 'Find the gap, prove the lift, report the win. See how agencies use geo-grid scans to show clients where they rank on the map and what the work moved.',
@@ -179,6 +195,54 @@ const PAGES = [
     desc: 'Track where a law firm ranks for “near me” legal searches across its city on Google and Apple Maps, point by point, with competitor maps and reports.',
     h1: 'Local SEO for law firms',
     lede: 'Clients search for a lawyer near them. See which parts of the city find your firm and which find the competition.',
+    sections: [] },
+  { slug: '/local-seo-for-plumbers/', file: 'local-seo-for-plumbers/index.html',
+    title: 'Local SEO for Plumbers — Map Rank Tracking | Eagle Eye',
+    desc: 'See where a plumbing business ranks for “plumber near me” across its whole service area on Google and Apple Maps, point by point, with competitor maps.',
+    h1: 'Local SEO for plumbers',
+    lede: 'An emergency call goes to whoever shows up first on the map. See every block where a plumber wins that search and every block where a rival does.',
+    sections: [] },
+  { slug: '/local-seo-for-accountants/', file: 'local-seo-for-accountants/index.html',
+    title: 'Local SEO for Accountants & CPAs — Eagle Eye',
+    desc: 'Track where an accounting or CPA firm ranks for “accountant near me” across its city on Google and Apple Maps, point by point, with competitor maps.',
+    h1: 'Local SEO for accountants & CPAs',
+    lede: 'Tax-season searches pick the firm they can find. See where an accounting practice ranks on the map across its city, street by street.',
+    sections: [] },
+  { slug: '/local-seo-for-physical-therapy/', file: 'local-seo-for-physical-therapy/index.html',
+    title: 'Local SEO for Physical Therapy Clinics — Eagle Eye',
+    desc: 'Track where a physical therapy clinic ranks for “physical therapy near me” across its catchment on Google and Apple Maps, point by point, with competitor maps.',
+    h1: 'Local SEO for physical therapy clinics',
+    lede: 'Patients book the clinic they find first. See where a PT practice ranks across its catchment on the map, block by block.',
+    sections: [] },
+  { slug: '/local-seo-for-optometrists/', file: 'local-seo-for-optometrists/index.html',
+    title: 'Local SEO for Optometrists & Eye Care — Eagle Eye',
+    desc: 'See where an optometry or eye-care practice ranks for “eye doctor near me” across its area on Google and Apple Maps, point by point, with competitor maps.',
+    h1: 'Local SEO for optometrists',
+    lede: 'A new patient searches “eye doctor near me” and picks from the map. See which blocks find the practice and which find a rival.',
+    sections: [] },
+  { slug: '/local-seo-for-barbers/', file: 'local-seo-for-barbers/index.html',
+    title: 'Local SEO for Barbershops — Map Rank Tracking | Eagle Eye',
+    desc: 'See where a barbershop ranks for “barber near me” across its neighbourhood on Google and Apple Maps, point by point, with competitor maps and reports.',
+    h1: 'Local SEO for barbershops',
+    lede: 'A fresh cut is a map search away. See exactly which blocks find the shop first and which find the barber down the street.',
+    sections: [] },
+  { slug: '/local-seo-for-florists/', file: 'local-seo-for-florists/index.html',
+    title: 'Local SEO for Florists — Map Rank Tracking | Eagle Eye',
+    desc: 'Track where a florist ranks for “florist near me” and same-day delivery across its area on Google and Apple Maps, point by point, with competitor maps.',
+    h1: 'Local SEO for florists',
+    lede: 'Same-day flowers go to whoever ranks where the buyer is standing. See the florist’s rank across the whole delivery area, block by block.',
+    sections: [] },
+  { slug: '/local-seo-for-self-storage/', file: 'local-seo-for-self-storage/index.html',
+    title: 'Local SEO for Self-Storage Facilities — Eagle Eye',
+    desc: 'See where a self-storage facility ranks for “storage units near me” across its area on Google and Apple Maps, point by point, with competitor maps.',
+    h1: 'Local SEO for self-storage',
+    lede: 'Renters pick the facility they find nearby. See where a storage business ranks on the map across its whole catchment, street by street.',
+    sections: [] },
+  { slug: '/local-seo-for-locksmiths/', file: 'local-seo-for-locksmiths/index.html',
+    title: 'Local SEO for Locksmiths — Map Rank Tracking | Eagle Eye',
+    desc: 'See where a locksmith ranks for “locksmith near me” across its whole service area on Google and Apple Maps, point by point, with competitor maps.',
+    h1: 'Local SEO for locksmiths',
+    lede: 'A lockout call goes to the first name on the map. See every block where a locksmith wins that search and every block where a rival does.',
     sections: [] },
 
   // ── Feature deep-dives + learn ──
@@ -409,7 +473,33 @@ const deRed = (html) => html
   .replace(/#E01E22/gi, '#0E9A68').replace(/#C8181C/gi, '#0B8057')
   .replace(/#A81418/gi, '#0A6E4A').replace(/#8E1114/gi, '#085939')
   .replace(/255, ?42, ?46/g, '18, 184, 119');
-const rewrite = (html) => deRed(html)
+// CONTENT+SEO ONLY (2026-11-19): drop the decorative renders — inline SVG geo-grids/map
+// mocks, <canvas>, and the empty grid-dot <i> — from captured fragments. Prose, headings,
+// lists and links are untouched. The animated WebGL backdrop (wl-bg.js) and the .wl-anim
+// gate are removed at the template level. Result: static, readable content pages.
+// Remove a <div class="NAME ...">...</div> block whole, by balancing nested <div>s.
+const dropBlocks = (html, names) => {
+  for (const cn of names) {
+    let idx;
+    const open = new RegExp('<div class="' + cn + '(\\s|")');
+    while ((idx = html.search(open)) !== -1) {
+      let i = html.indexOf('>', idx) + 1, depth = 1;
+      const re = /<div\b|<\/div>/g; re.lastIndex = i; let m;
+      while ((m = re.exec(html))) {
+        if (m[0] === '</div>') { depth--; if (depth === 0) { i = re.lastIndex; break; } } else depth++;
+      }
+      if (depth !== 0) break; // unbalanced — leave as-is rather than corrupt
+      html = html.slice(0, idx) + html.slice(i);
+    }
+  }
+  return html;
+};
+const stripRender = (html) => dropBlocks(html, ['wl-stage', 'wl-stages'])
+  .replace(/<ol class="wl-stages"[\s\S]*?<\/ol>/gi, '')
+  .replace(/<svg[\s\S]*?<\/svg>/gi, '')
+  .replace(/<canvas[\s\S]*?<\/canvas>/gi, '')
+  .replace(/<i(\s[^>]*)?><\/i>/gi, '');
+const rewrite = (html) => stripRender(deRed(html))
   // EE-COPY-C2: the Apple Maps card uses a spaced hyphen where an em-dash reads clean.
   .replace(/searched on Apple Maps - run/g, 'searched on Apple Maps — run')
   .replace(/href="\/app\/welcome"/g, 'href="/"')
@@ -462,7 +552,7 @@ const PLANS = [
   ['Enterprise 1', '499.00'], ['Enterprise 2', '999.00'], ['Enterprise 3', '2499.00'], ['Enterprise 4', '4999.00'],
 ];
 const ORG = { '@type': 'Organization', '@id': ORIGIN + '/#org', name: 'Eagle Eye', url: ORIGIN, logo: OGIMG };
-const jsonLd = (p) => {
+const jsonLd = (p, c = {}) => {
   const base = { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Eagle Eye',
     applicationCategory: 'BusinessApplication', operatingSystem: 'Web', url: ORIGIN + p.slug,
     description: p.desc, publisher: { '@id': ORIGIN + '/#org' },
@@ -479,21 +569,117 @@ const jsonLd = (p) => {
       itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Home', item: ORIGIN + '/' }]
         .concat(p.slug === '/' ? [] : [{ '@type': 'ListItem', position: 2, name: slugTitle(p.slug), item: ORIGIN + p.slug }]) },
   ];
-  // FAQ page gets FAQPage schema from the rendered Q&A (content.mjs).
+  // Per-page FAQPage schema from the content entry's faq[] (AEO — answer-engine optimisation).
+  if (Array.isArray(c.faq) && c.faq.length) {
+    graph.push({ '@context': 'https://schema.org', '@type': 'FAQPage', '@id': ORIGIN + p.slug + '#faq',
+      mainEntity: c.faq.map(([q, a]) => ({ '@type': 'Question', name: stripTags(q),
+        acceptedAnswer: { '@type': 'Answer', text: stripTags(a) } })) });
+  }
   return graph;
 };
+
+// Per-page AEO FAQ — a content entry may carry `faq: [[question, answer], ...]`.
+// It renders as an on-page <details> accordion (so answer engines and readers both get it)
+// AND drives a FAQPage JSON-LD node (see jsonLd). Answers are plain text; questions are the
+// long-tail queries the page targets. HTML in an answer is allowed for the on-page render and
+// stripped for the schema text.
+const stripTags = (s) => String(s).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+const faqSection = (faq) => !Array.isArray(faq) || !faq.length ? '' :
+  `<section class="wl-sec wl-faqsec"><div class="wl-head"><h2>Questions, answered</h2></div>
+  <div class="wl-faq">${faq.map(([q, a]) =>
+    `<details class="wl-q"><summary><span>${q}</span><i class="wl-plus" aria-hidden="true"></i></summary><p>${a}</p></details>`).join('')}</div></section>`;
 
 // Case-study pages (data-driven; empty until real scan data lands in casestudies.mjs).
 PAGES.push(...caseStudyPages());
 
+// ---- Full product-page furniture (Jerome 2026-11-19: "each page a full content page") ----
+// A STATIC geo-grid card for the hero. Pure markup + the existing .wl-cell heat classes, so it
+// renders without dashboard.js (the tilt/sweep are CSS-only and degrade to a flat card) and
+// inherits whatever colour ramp the copied stylesheet carries. No fabricated client: the demo
+// subject is a generic descriptor + the page's own "near me" query.
+const DEMO = {
+  '/local-seo-for-restaurants/': ['A restaurant', 'restaurants near me'],
+  '/local-seo-for-dentists/': ['A dental clinic', 'dentist near me'],
+  '/local-seo-for-home-services/': ['A home-services pro', 'plumber near me'],
+  '/local-seo-for-law-firms/': ['A law firm', 'lawyer near me'],
+  '/local-seo-for-retail/': ['A retail store', 'shop near me'],
+  '/local-seo-for-auto-repair/': ['An auto shop', 'auto repair near me'],
+  '/local-seo-for-real-estate/': ['A real-estate office', 'realtor near me'],
+  '/local-seo-for-gyms-and-fitness/': ['A gym', 'gym near me'],
+  '/local-seo-for-salons-and-spas/': ['A salon', 'salon near me'],
+  '/local-seo-for-chiropractors/': ['A chiropractor', 'chiropractor near me'],
+  '/local-seo-for-veterinarians/': ['A vet clinic', 'vet near me'],
+  '/local-seo-for-roofers/': ['A roofing company', 'roofer near me'],
+  '/local-seo-for-med-spas/': ['A med spa', 'med spa near me'],
+  '/local-seo-for-hotels/': ['A hotel', 'hotels near me'],
+  '/local-seo-for-cleaning-services/': ['A cleaning service', 'cleaners near me'],
+  '/local-seo-for-landscapers/': ['A landscaper', 'landscaper near me'],
+  '/local-seo-for-pest-control/': ['A pest-control firm', 'pest control near me'],
+  '/local-seo-for-electricians/': ['An electrician', 'electrician near me'],
+  '/local-seo-for-hvac/': ['An HVAC company', 'hvac near me'],
+  '/local-seo-for-car-dealerships/': ['A car dealership', 'car dealer near me'],
+  '/local-seo-for-urgent-care/': ['An urgent-care clinic', 'urgent care near me'],
+  '/local-seo-for-coffee-shops/': ['A coffee shop', 'coffee near me'],
+  '/local-seo-for-insurance-agents/': ['An insurance agent', 'insurance near me'],
+  '/local-seo-for-moving-companies/': ['A moving company', 'movers near me'],
+  '/local-seo-for-plumbers/': ['A plumbing business', 'plumber near me'],
+  '/local-seo-for-accountants/': ['An accounting firm', 'accountant near me'],
+  '/local-seo-for-physical-therapy/': ['A physio clinic', 'physical therapy near me'],
+  '/local-seo-for-optometrists/': ['An eye-care practice', 'eye doctor near me'],
+  '/local-seo-for-barbers/': ['A barbershop', 'barber near me'],
+  '/local-seo-for-florists/': ['A florist', 'florist near me'],
+  '/local-seo-for-self-storage/': ['A storage facility', 'storage units near me'],
+  '/local-seo-for-locksmiths/': ['A locksmith', 'locksmith near me'],
+};
+const gridCard = (slug) => {
+  const [biz, query] = DEMO[slug] || (slug === '/' ? ['Joe’s Pizza', 'pizza near me'] : ['A local business', 'service near me']);
+  const seed = [...slug].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  const rnd = (i) => (Math.sin(seed * 12.9898 + i * 78.233) * 43758.5453) % 1;
+  const N = 9, mid = (N - 1) / 2;
+  let cells = '';
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const i = y * N + x, d = Math.hypot(x - mid, y - mid);
+    if (x === mid && y === mid) { cells += `<i class="wl-cell r1 pin">1</i>`; continue; }
+    const miss = d > 4.4 && Math.abs(rnd(i)) > 0.62;
+    if (miss) { cells += `<i class="wl-cell rx"></i>`; continue; }
+    const rank = Math.max(1, Math.round(1 + d * 2.0 + Math.abs(rnd(i + 99)) * 4));
+    const cls = rank <= 3 ? 'r1' : rank <= 6 ? 'r2' : rank <= 10 ? 'r3' : rank <= 14 ? 'r4' : 'r5';
+    cells += `<i class="wl-cell ${cls}">${rank}</i>`;
+  }
+  return `<div class="wl-hero-media"><div class="wl-visual">
+    <div class="wl-visual-top"><b>${biz}</b><span>“${query}” · 9 × 9 grid</span><span class="wl-live"><i></i>Complete</span></div>
+    <div class="wl-map"><div class="wl-grid">${cells}</div></div>
+    <div class="wl-readout"><i class="wl-cell r1"></i><span>At the centre pin, ${biz.replace(/^An? /, '')} ranks <b>1</b> — the heat shows how fast that slips block by block.</span></div>
+  </div></div>`;
+};
+// The three numbers every scan folds the grid into — definitions, no fabricated values.
+const numbersSection = () => `<section class="wl-sec wl-numsec"><div class="wl-head"><h2>Three numbers, every scan</h2>
+  <div class="wl-head-r"><p class="wl-lede">The whole grid rolls up into the figures a client actually remembers — tracked every run so the trend is the proof.</p></div></div>
+  <div class="wl-nums">
+    <div class="wl-numcard"><b>LSOV</b><span class="wl-numname">Local Share of Voice</span><p>How much of the whole grid finds the business near the top — one number for the entire map.</p></div>
+    <div class="wl-numcard"><b>ARP</b><span class="wl-numname">Average Rank, found</span><p>The mean position across only the points that return the business at all.</p></div>
+    <div class="wl-numcard"><b>ATRP</b><span class="wl-numname">Average Total Rank</span><p>The same average, counting every point that missed the business entirely — the honest one.</p></div>
+  </div></section>`;
+// Closing conversion band (every page; home keeps its captured FINAL instead).
+const ctaBand = () => `<section class="wl-sec wl-ctasec"><div class="wl-cta">
+  <h2>Find out where you really rank</h2>
+  <p>Your first scan of your own site is free, at any grid size. No card needed.</p>
+  <div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a></div>
+</div></section>`;
+
 const PAGE = async (p) => {
-  const c = CONTENT[p.slug] || {};
+  const c = { ...(CONTENT[p.slug] || {}) };
+  if (!c.faq && FAQS[p.slug]) c.faq = FAQS[p.slug];
   const bodySecs = [];
   if (p._intro) bodySecs.push(`<section class="wl-sec"><div class="wl-prose">${p._intro}</div></section>`);
   if (c.introHtml) bodySecs.push(c.introHtml);
   for (const s of p.sections) bodySecs.push(rewrite(await readFrag(`sec-${s}.html`)));
   if (c.afterHtml) bodySecs.push(c.afterHtml);
-  const ld = jsonLd(p);
+  // Numbers reinforcement on every page except the one that already is the numbers page.
+  if (p.slug !== '/the-numbers/') bodySecs.push(numbersSection());
+  if (c.faq) bodySecs.push(faqSection(c.faq));
+  if (!p.home) bodySecs.push(ctaBand());
+  const ld = jsonLd(p, c);
   const head = `<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${p.title}</title>
@@ -508,13 +694,12 @@ const PAGE = async (p) => {
 <link rel="icon" href="/app/logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="/app/dashboard.css">
-<link rel="stylesheet" href="/app/pages.css">
-<script src="/app/theme.js"></script>
-<script src="/app/wl-bg.js" defer></script>
+<link rel="stylesheet" href="/app/dashboard.css?v=${ASSETVER}">
+<link rel="stylesheet" href="/app/pages.css?v=${ASSETVER}">
+<script src="/app/theme.js?v=${ASSETVER}"></script>
 ${ld.map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join('\n')}
 </head><body>
-<div class="wl wl-anim">
+<div class="wl">
 ${NAV(p.slug)}
 <main>
 <section class="wl-hero${p.home ? '' : ' wl-hero-sm'}">
@@ -528,6 +713,7 @@ ${NAV(p.slug)}
     <p class="wl-note">No card needed. Your first scan of your own website is free at any size.</p>` :
     `<div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a></div>`}
   </div>
+  ${gridCard(p.slug)}
 </section>
 <div class="wl-body">
 ${bodySecs.join('\n')}
@@ -601,7 +787,7 @@ const deCssRed = (css) => {
     });
   return css;
 };
-for (const f of ['dashboard.css', 'pages.css', 'theme.js', 'wl-bg.js', 'logo.svg', 'eagle.svg', 'sgen-logo.png', 'og-eagleeye.png', 'pin.bin', 'city.bin', 'emblem.bin', 'person.bin'])
+for (const f of ['dashboard.css', 'pages.css', 'theme.js', 'logo.svg', 'eagle.svg', 'sgen-logo.png', 'og-eagleeye.png'])
   if (existsSync(join(ROOT, 'src/app', f))) {
     // Original design preserved verbatim — copy CSS/SVG as-is (no recolour). The only
     // change in this reforge is copy/content, not the brand design (Jerome, 2026-11-19).
