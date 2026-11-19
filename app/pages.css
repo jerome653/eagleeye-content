@@ -16,8 +16,15 @@
 .wl-prose .wl-k { color: var(--red-hi); font-weight: 600; }
 
 .wl-related-list { list-style: none; display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; }
-.wl-related-list a { display: inline-block; padding: 9px 15px; border: 1px solid var(--hair-2);
+.wl-related-list a { display: inline-flex; align-items: center; min-height: 44px; padding: 9px 15px; border: 1px solid var(--hair-2);
   border-radius: 999px; color: var(--ink-2); text-decoration: none; font-size: 14px; transition: .15s; }
+
+/* Touch tap-target floor (44px) for the nav links and header actions — clears the mobile
+   sweep's tap-target-small flags without changing desktop layout. */
+@media (max-width: 767px) {
+  .wl .wl-links a, .wl .wl-acts .wl-btn, .wl .wl-acts .wl-link { min-height: 44px; display: inline-flex; align-items: center; }
+  .wl .wl-brand { min-height: 44px; display: inline-flex; align-items: center; }
+}
 .wl-related-list a:hover { border-color: var(--red-hi); color: var(--ink); }
 
 /* Case-study rendering (casestudies.mjs) — stat table, delta, quote, index list. */
