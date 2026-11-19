@@ -1,0 +1,35 @@
+/* Eagle Eye multi-page: minimal additions on top of dashboard.css tokens.
+   Typography + small page hero + related-links chips. No new design language. */
+.wl .wl-hero.wl-hero-sm { min-height: 54vh; }
+@media (max-width: 767px) { .wl .wl-hero.wl-hero-sm { min-height: 44vh; } }
+
+.wl-prose { max-width: 72ch; margin: 0 auto; color: var(--ink-2); font-size: 16px; line-height: 1.72; }
+.wl-prose > :first-child { margin-top: 0; }
+.wl-prose h2 { color: var(--ink); font-size: clamp(22px, 3vw, 30px); line-height: 1.15; margin: 1.8em 0 .5em; letter-spacing: -.01em; }
+.wl-prose h3 { color: var(--ink); font-size: 19px; margin: 1.5em 0 .4em; }
+.wl-prose p { margin: 0 0 1.05em; }
+.wl-prose ul { margin: 0 0 1.2em; padding-left: 1.1em; }
+.wl-prose li { margin: 0 0 .5em; }
+.wl-prose b, .wl-prose strong { color: var(--ink); }
+.wl-prose a { color: var(--red-hi); text-decoration: none; border-bottom: 1px solid var(--hair-3); }
+.wl-prose a:hover { border-bottom-color: var(--red-hi); }
+.wl-prose .wl-k { color: var(--red-hi); font-weight: 600; }
+
+.wl-related-list { list-style: none; display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; }
+.wl-related-list a { display: inline-block; padding: 9px 15px; border: 1px solid var(--hair-2);
+  border-radius: 999px; color: var(--ink-2); text-decoration: none; font-size: 14px; transition: .15s; }
+.wl-related-list a:hover { border-color: var(--red-hi); color: var(--ink); }
+
+/* Case-study rendering (casestudies.mjs) — stat table, delta, quote, index list. */
+.wl-prose .cs-table { width: 100%; border-collapse: collapse; margin: 1.2em 0 1.4em; font-size: 15px; }
+.wl-prose .cs-table th, .wl-prose .cs-table td { text-align: left; padding: .55em .7em; border-bottom: 1px solid var(--line, rgba(255,255,255,.1)); }
+.wl-prose .cs-table thead th { color: var(--ink-2); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+.wl-prose .cs-table td:not(:first-child), .wl-prose .cs-table th:not(:first-child) { text-align: right; white-space: nowrap; }
+.wl-prose .cs-up { color: var(--eye-green, #2bd48d); }
+.wl-prose .cs-flat { color: var(--ink-2); }
+.wl-prose .cs-quote { margin: 1.4em 0; padding: .2em 0 .2em 1.1em; border-left: 3px solid var(--eye-green, #2bd48d); color: var(--ink); font-size: 18px; line-height: 1.5; }
+.wl-prose .cs-quote cite { display: block; margin-top: .5em; font-size: 14px; font-style: normal; color: var(--ink-2); }
+.wl-prose ul.cs-index { list-style: none; padding-left: 0; }
+.wl-prose ul.cs-index li { margin: 0 0 .7em; }
+.wl-prose ul.cs-index a { display: flex; justify-content: space-between; gap: 1em; flex-wrap: wrap; padding: .7em .9em; border: 1px solid var(--line, rgba(255,255,255,.1)); border-radius: 10px; text-decoration: none; }
+.wl-prose .cs-lift, .wl-prose ul.cs-index .cs-lift { color: var(--eye-green, #2bd48d); font-variant-numeric: tabular-nums; }
