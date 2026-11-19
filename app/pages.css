@@ -100,3 +100,39 @@
 .wl-ctasec .wl-cta h2 { font-size: clamp(26px, 4vw, 40px); margin: 0 0 10px; color: var(--ink, #fff); letter-spacing: -.02em; }
 .wl-ctasec .wl-cta p { color: var(--ink-2); margin: 0 0 24px; }
 .wl-ctasec .wl-ctas { justify-content: center; display: flex; }
+
+/* ------------------------------------------------------------------ *
+   CONTRAST FIX (2026-11-19). dashboard.css ships LIGHT ink tokens
+   (--ink #111113 / --ink-2 #3F3F47) that the product app flips under a
+   theme class the static content build never applies — so every content
+   heading/body using var(--ink*) renders near-black on this hardcoded-dark
+   page (card title, numcard value, prose + CTA h2 all measured rgb(17,17,19)).
+   Remap the tokens to light values, scoped to the dark content containers
+   ONLY. The white pill buttons use a hardcoded rgb(10,7,7), NOT var(--ink),
+   so they are untouched. No dashboard.css edit, no global flip.
+ * ------------------------------------------------------------------ */
+.wl .wl-prose,
+.wl .wl-visual,
+.wl .wl-numsec,
+.wl .wl-ctasec,
+.wl .wl-readout { --ink: #F5F3F2; --ink-2: #B9AFAF; }
+
+/* ------------------------------------------------------------------ *
+   GEO-GRID HEATMAP (2026-11-19). dashboard.css colours the rank cells on
+   a single RED hue (r1 #ff2a2e … r5 #2e0607), so the hero grid reads as a
+   flat red wall with no good/bad signal and the #1 pin is the same red as
+   rank-1 cells. Re-colour them as the real product's green→red heatmap,
+   scoped under .wl .wl-visual so specificity beats the single-class
+   dashboard rule without !important. White bold numerals stay legible.
+ * ------------------------------------------------------------------ */
+.wl .wl-visual .wl-cell { color: #fff; }
+/* dashboard.css sets .wl-cell.pin background with !important, so the centre
+   pin can only be re-coloured with !important — the one place it is needed. */
+.wl .wl-visual .wl-cell.pin { background: #0db47a !important; }
+.wl .wl-visual .wl-cell.r1  { background: #159a56; }
+.wl .wl-visual .wl-cell.r2  { background: #4f9e2a; }
+.wl .wl-visual .wl-cell.r3  { background: #a8841a; }
+.wl .wl-visual .wl-cell.r4  { background: #c25a1b; }
+.wl .wl-visual .wl-cell.r5  { background: #b4231f; }
+.wl .wl-visual .wl-cell.rx  { background: rgba(255,255,255,.05); color: transparent; }
+.wl .wl-visual .wl-readout .wl-cell.r1 { background: #159a56; }
