@@ -40,3 +40,25 @@
 .wl-prose ul.cs-index li { margin: 0 0 .7em; }
 .wl-prose ul.cs-index a { display: flex; justify-content: space-between; gap: 1em; flex-wrap: wrap; padding: .7em .9em; border: 1px solid var(--line, rgba(255,255,255,.1)); border-radius: 10px; text-decoration: none; }
 .wl-prose .cs-lift, .wl-prose ul.cs-index .cs-lift { color: var(--eye-green, #2bd48d); font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------ *
+   Content-page layout rhythm.
+   dashboard.css sizes the hero + section gaps around the WebGL backdrop
+   and device renders (.wl-hero min-height:100vh @3189, .wl-sec padding-top
+   140px @3212, .wl-final 120/200 @3414). The content build strips those
+   visuals, so those gaps become large empty dark bands. These selectors
+   (.wl …) out-specify the single-class originals and tighten each section
+   to hug its own content. No !important, no backdrop change.
+ * ------------------------------------------------------------------ */
+.wl .wl-hero:not(.wl-hero-sm) { min-height: auto; padding-top: 118px; padding-bottom: 72px; }
+.wl .wl-body > .wl-sec { padding-top: 84px; }
+.wl .wl-body > .wl-sec:first-child { padding-top: 64px; }
+.wl .wl-body { padding-bottom: 88px; }
+.wl .wl-final { padding-top: 92px; padding-bottom: 120px; }
+@media (max-width: 767px) {
+  .wl .wl-hero:not(.wl-hero-sm) { padding-top: 96px; padding-bottom: 52px; }
+  .wl .wl-body > .wl-sec { padding-top: 56px; }
+  .wl .wl-body > .wl-sec:first-child { padding-top: 44px; }
+  .wl .wl-body { padding-bottom: 64px; }
+  .wl .wl-final { padding-top: 64px; padding-bottom: 84px; }
+}
