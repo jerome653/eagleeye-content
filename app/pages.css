@@ -136,3 +136,25 @@
 .wl .wl-visual .wl-cell.r5  { background: #b4231f; }
 .wl .wl-visual .wl-cell.rx  { background: rgba(255,255,255,.05); color: transparent; }
 .wl .wl-visual .wl-readout .wl-cell.r1 { background: #159a56; }
+
+/* ------------------------------------------------------------------ *
+   DEAD REVEAL FIX (2026-11-19). dashboard.css ships a scroll-reveal:
+   .wl-rv starts opacity:0 and only .wl-rv.in (added by a JS
+   IntersectionObserver) reveals it. The static content build has no such
+   observer, so captured .wl-rv blocks (the home closing CTA in .wl-final)
+   stay opacity:0 forever — a ~480px invisible band before the footer.
+   Mirror dashboard.css's own no-motion rule so the content is always shown.
+ * ------------------------------------------------------------------ */
+.wl .wl-rv { opacity: 1; translate: none; scale: none; rotate: none; transition: none; }
+
+/* ------------------------------------------------------------------ *
+   WIDE FOOTER COLUMN (2026-11-19). The build tags the industry column
+   .wl-foot-col-wide and the grid gives it a double-width cell, but
+   dashboard.css has NO rule for that class, so its ~28 links inherit the
+   base single-column flex and stack ~1100px tall (footer 1817px, dead
+   space beside it). Flow the links into two columns; header spans both.
+ * ------------------------------------------------------------------ */
+.wl .wl-foot-col-wide { display: block; columns: 2; column-gap: 40px; }
+.wl .wl-foot-col-wide b { column-span: all; display: block; }
+.wl .wl-foot-col-wide a { display: block; break-inside: avoid; }
+@media (max-width: 560px) { .wl .wl-foot-col-wide { columns: 1; } }
