@@ -1,0 +1,43 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap">
+<style>
+  /* Eagle Eye brand red (dashboard.css:10 default theme): --red #B80908 · --red-hi #F03A33 · --red-deep #7A0605 */
+  :root{--red:#B80908;--red-hi:#F03A33;--red-deep:#7A0605;--ink:#F5F3F2;--ink-2:#C9B6B4;}
+  *{margin:0;box-sizing:border-box}
+  html,body{width:1200px;height:630px;overflow:hidden}
+  body{background:radial-gradient(120% 140% at 72% 32%, #2a0a09 0%, #150807 44%, #000 100%);
+    font-family:Archivo,system-ui,sans-serif;color:var(--ink);position:relative}
+  /* faint geo-grid, brighter rings near the pin */
+  .grid{position:absolute;inset:0;background:
+    linear-gradient(transparent 0 71px,rgba(240,58,51,.08) 71px 72px) 0 0/72px 72px,
+    linear-gradient(90deg,transparent 0 71px,rgba(240,58,51,.08) 71px 72px) 0 0/72px 72px;
+    -webkit-mask:radial-gradient(60% 70% at 72% 40%, #000 20%, transparent 80%)}
+  .pin{position:absolute;right:220px;top:230px;width:150px;height:150px;border-radius:50%;
+    background:radial-gradient(circle,var(--red-hi) 0 22%,rgba(240,58,51,.22) 23% 60%,transparent 61%);
+    box-shadow:0 0 90px 12px rgba(240,58,51,.45)}
+  .pin b{position:absolute;inset:0;display:grid;place-items:center;font-size:46px;font-weight:800;color:#2a0605}
+  .wrap{position:absolute;left:72px;top:0;height:630px;display:flex;flex-direction:column;justify-content:center;width:760px}
+  .brand{display:flex;align-items:center;gap:14px;margin-bottom:34px}
+  .brand .m{width:40px;height:40px;border-radius:10px;background:var(--red);
+    -webkit-mask:conic-gradient(from -40deg,#000 0 72%,transparent 72%);mask-size:cover;box-shadow:0 0 30px rgba(240,58,51,.5)}
+  .brand span{font-weight:800;letter-spacing:.14em;font-size:22px}
+  .brand span .e2{color:var(--red-hi)}
+  h1{font-size:76px;line-height:.98;font-weight:800;letter-spacing:-.02em}
+  h1 .hot{color:var(--red-hi)}
+  p{margin-top:26px;font-size:26px;color:var(--ink-2);font-weight:500}
+  .dots{margin-top:30px;display:flex;gap:10px}
+  .dots i{width:11px;height:11px;border-radius:50%;background:var(--red-hi);box-shadow:0 0 10px var(--red-hi)}
+  .dots i.r{background:var(--red);box-shadow:0 0 10px var(--red)}
+  .dots span{margin-left:8px;color:var(--ink-2);font-size:20px;align-self:center}
+</style></head>
+<body>
+  <div class="grid"></div>
+  <div class="pin"><b>1</b></div>
+  <div class="wrap">
+    <div class="brand"><i class="m"></i><span>EAGLE <span class="e2">EYE</span></span></div>
+    <h1>Every street has a #1.<br><span class="hot">Make it you.</span></h1>
+    <p>Geo-grid rank tracking for Google &amp; Apple Maps</p>
+    <div class="dots"><i></i><i class="r"></i><i></i><span>LSOV · ARP · ATRP, point by point</span></div>
+  </div>
+</body></html>
