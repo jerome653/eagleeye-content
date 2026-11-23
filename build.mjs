@@ -136,6 +136,15 @@ th{background:#f4f4f4}
 .wl-hubcard b{display:block;color:#0b1f19;font-size:15px}
 .wl-crumb{max-width:760px;margin:0 auto;padding:18px 0 0;font-size:13px;color:#5c6b64}
 .wl-crumb a{color:#17a673}.wl-crumb a:hover{text-decoration:underline}.wl-crumb span{color:#9aa8a1;margin:0 2px}
+.wl-hubcard span{display:block;margin-top:4px;color:#5c6b64;font-size:12.5px;font-weight:400}
+/* comparison table */
+.wl-cmp-wrap{overflow-x:auto;margin:10px 0}
+.wl-cmp{width:100%;border-collapse:collapse;font-size:14px}
+.wl-cmp th,.wl-cmp td{text-align:left;padding:10px 12px;border-bottom:1px solid #e7e9ea;vertical-align:top}
+.wl-cmp thead th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#5c6b64}
+.wl-cmp thead th:nth-child(2){color:#0b8057}
+.wl-cmp tbody th{font-weight:600;color:#0b1f19;width:28%}
+.wl-cmp td:nth-child(2){background:#f1faf6}
 @media(max-width:600px){h1{font-size:28px}.wl-lede{font-size:18px}.wl{padding:0 18px}.wl-foot-industry{columns:2 130px}}
 `;
 
@@ -150,6 +159,7 @@ const NAVSET = [
   ['/apple-maps-rank-tracking/', 'Apple Maps'],
   ['/pricing/', 'Pricing'],
   ['/faq/', 'FAQ'],
+  ['/compare/', 'Compare'],
 ];
 // Primary top nav: lean brand-shaped set (mirrors the live welcome's 5-item nav — brand design),
 // so .wl-links fits one row without overlap. Full NAVSET stays in the mobile menu + footer.
@@ -255,6 +265,9 @@ let FAQS = {};
 if (existsSync(join(ROOT, 'faqs.mjs'))) FAQS = (await import('./faqs.mjs')).default;
 let caseStudyPages = () => [];
 if (existsSync(join(ROOT, 'casestudies.mjs'))) ({ caseStudyPages } = await import('./casestudies.mjs'));
+// Comparison ("vs") pages — grounded competitor content, authored in compare.mjs.
+let COMPARE = null;
+if (existsSync(join(ROOT, 'compare.mjs'))) COMPARE = (await import('./compare.mjs')).default;
 
 const PAGES = [
   { slug: '/', file: 'index.html',
@@ -863,6 +876,17 @@ const HUBPAGES = [
 for (const p of HUBPAGES) p.ckey = p.slug;
 PAGES.push(...HUBPAGES);
 
+// Comparison hub + vs-pages (compare.mjs). Each carries its grounded data on p.compare.
+if (COMPARE) {
+  const hubE = { slug: '/compare/', file: 'compare/index.html', comparehub: true, ckey: '/compare/',
+    title: COMPARE.hub.title, desc: COMPARE.hub.desc, h1: COMPARE.hub.h1, lede: COMPARE.hub.lede, sections: [] };
+  PAGES.push(hubE);
+  for (const cp of COMPARE.pages) {
+    PAGES.push({ slug: cp.slug, file: cp.slug.replace(/^\//, '') + 'index.html', compare: cp, ckey: cp.slug,
+      title: cp.title, desc: cp.desc, h1: cp.h1, lede: cp.lede, sections: [] });
+  }
+}
+
 // Hub landing lists every child in its cluster as a card grid.
 const hubGrid = (hub) => {
   const items = HUBSETS[hub] || [];
@@ -870,14 +894,27 @@ const hubGrid = (hub) => {
     `<a class="wl-hubcard" href="${h}"><b>${t}</b></a>`).join('')}</div></section>`;
 };
 // Two-way breadcrumb: every nested leaf links back up to its hub and home.
-const HUBLABEL = { industries: 'Industries', solutions: 'Solutions', tracking: 'Tracking', learn: 'Learn' };
+const HUBLABEL = { industries: 'Industries', solutions: 'Solutions', tracking: 'Tracking', learn: 'Learn', compare: 'Compare' };
 const CRUMB = (p) => {
   const segs = p.slug.split('/').filter(Boolean);
   if (segs.length < 2) return '';
   const hub = '/' + segs[0] + '/';
-  if (!HUBSETS[hub]) return '';
+  if (!HUBSETS[hub] && hub !== '/compare/') return '';
   return `<nav class="wl-crumb" aria-label="Breadcrumb"><a href="/">Home</a> <span>›</span> `
     + `<a href="${hub}">${HUBLABEL[segs[0]] || segs[0]}</a> <span>›</span> <span>${p.h1}</span></nav>`;
+};
+
+// Comparison hub card grid (with per-competitor blurb) and vs-page body (table + prose).
+const compareHubGrid = () => `<section class="wl-sec"><div class="wl-hubgrid">${(COMPARE?.hub.items || []).map(it =>
+  `<a class="wl-hubcard" href="${it.slug}"><b>vs ${it.name}</b><span>${it.blurb}</span></a>`).join('')}</div></section>`;
+const compareBody = (cp) => {
+  const table = `<section class="wl-sec"><div class="wl-cmp-wrap"><table class="wl-cmp">`
+    + `<thead><tr><th></th><th>Eagle Eye</th><th>${cp.competitor}</th></tr></thead><tbody>`
+    + cp.table.map(([d, a, b]) => `<tr><th>${d}</th><td>${a}</td><td>${b}</td></tr>`).join('')
+    + `</tbody></table></div></section>`;
+  const secs = (cp.sections || []).map(s =>
+    `<section class="wl-sec"><div class="wl-prose"><h2>${s.h}</h2>${s.html}</div></section>`).join('');
+  return table + secs;
 };
 
 const PAGE = async (p) => {
@@ -885,6 +922,8 @@ const PAGE = async (p) => {
   if (!c.faq && FAQS[p.ckey]) c.faq = FAQS[p.ckey];
   const bodySecs = [];
   if (p.hub) bodySecs.push(hubGrid(p.hub));
+  if (p.comparehub) bodySecs.push(compareHubGrid());
+  if (p.compare) { if (p.compare.faq) c.faq = p.compare.faq; bodySecs.push(compareBody(p.compare)); }
   if (p._intro) bodySecs.push(`<section class="wl-sec"><div class="wl-prose">${p._intro}</div></section>`);
   if (c.introHtml) bodySecs.push(c.introHtml);
   for (const s of p.sections) bodySecs.push(rewrite(await readFrag(`sec-${s}.html`)));
