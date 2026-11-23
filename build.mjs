@@ -935,6 +935,48 @@ const FREETOOLS = [
 for (const p of FREETOOLS) p.ckey = p.slug;
 PAGES.push(...FREETOOLS);
 
+// Programmatic {industry}-in-{metro} pages. Tight scope (Jerome 2026-11-23): top-10 US metros
+// x 5 flagship trades = 50 pages. Each page's copy is varied by BOTH the trade pain and a true
+// per-metro geography descriptor, so no two pages read as token-swapped duplicates.
+const METROS = [
+  ['new-york', 'New York', 'dense and walkable, where your rank can flip two avenues over and the pin radius is tight'],
+  ['los-angeles', 'Los Angeles', 'sprawling and car-first — a customer in Pasadena searches a different map than one in Santa Monica'],
+  ['chicago', 'Chicago', 'split neighborhood by neighborhood, where the Loop and the North Side are two separate search markets'],
+  ['houston', 'Houston', 'one of the largest, unzoned metro footprints in the country, where coverage gaps hide between suburbs'],
+  ['phoenix', 'Phoenix', 'a wide Sunbelt grid of suburbs, where ranking in Scottsdale tells you nothing about Mesa'],
+  ['philadelphia', 'Philadelphia', 'tight rowhouse neighborhoods where a few blocks separate the top of the pack from invisible'],
+  ['san-antonio', 'San Antonio', 'spread across a large, fast-growing footprint where the loop highways carve up the market'],
+  ['san-diego', 'San Diego', 'strung along the coast and inland valleys — North County and downtown are separate map battles'],
+  ['dallas', 'Dallas', 'a sprawling metroplex where Fort Worth, Plano and the core each rank on their own'],
+  ['austin', 'Austin', 'growing fast and spreading outward, where the suburbs are catching up to downtown demand'],
+];
+const FLAGSHIP = [
+  ['plumbers', 'Plumbers', 'an emergency call goes to whoever shows up first on the map'],
+  ['hvac', 'HVAC companies', 'in peak season the top three pins take the calls and the rest wait'],
+  ['roofers', 'Roofers', 'after a storm the business goes to whoever ranks where the damage is'],
+  ['electricians', 'Electricians', 'homeowners pick from the map pack, not from page two'],
+  ['med-spas', 'Med spas', 'clients book the closest highly-rated name they see on the map'],
+];
+const CITYCHILDREN = {};
+const CITYPAGES = [];
+for (const [ik, ilabel, pain] of FLAGSHIP) {
+  const parent = '/industries/' + ik + '/';
+  CITYCHILDREN[parent] = [];
+  for (const [ck, city, geo] of METROS) {
+    const slug = parent + ck + '/';
+    CITYCHILDREN[parent].push([slug, city]);
+    CITYPAGES.push({
+      slug, file: slug.replace(/^\//, '') + 'index.html', ckey: slug, sections: [], crumbLeaf: city,
+      title: `${ilabel} Local SEO in ${city} | Eagle Eye`,
+      desc: `See where ${ilabel.toLowerCase()} rank across ${city} on the Google and Apple map — a geo-grid scan of the whole metro, first scan free, no card.`,
+      h1: `${ilabel} local rank tracking in ${city}`,
+      lede: `For ${ilabel.toLowerCase()} in ${city}, ${pain}. Eagle Eye grids the whole metro on Google and Apple Maps and shows exactly where you own the pin — and where a rival takes it.`,
+      _intro: `<p>${city} is ${geo}. A single rank for "${ilabel.toLowerCase()} near me" hides that completely — you can sit first downtown and be nowhere three neighborhoods out, which is where half the calls come from. Eagle Eye lays a grid across the whole ${city} market and runs a real search from every point, so you see the map the way your customers actually do.</p>`
+        + `<p>Every scan rolls ${city} into three numbers — your Local Share of Voice, average rank and the share of points where you crack the top three — plus a competitor map naming whoever outranks you at each pin. Run your first ${city} scan free, at any grid size, with no card.</p>` });
+  }
+}
+PAGES.push(...CITYPAGES);
+
 // Hub landing lists every child in its cluster as a card grid.
 const hubGrid = (hub) => {
   const items = HUBSETS[hub] || [];
@@ -944,14 +986,24 @@ const hubGrid = (hub) => {
 // Two-way breadcrumb: every nested leaf links back up to its hub and home.
 const HUBLABEL = { industries: 'Industries', solutions: 'Solutions', tracking: 'Tracking', learn: 'Learn', compare: 'Compare', 'free-tools': 'Free tools' };
 const CRUMBHUBS = new Set(['/compare/', '/free-tools/']);
+const LABELBYSLUG = {};
+for (const set of Object.values(HUBSETS)) for (const [h, t] of set) LABELBYSLUG[h] = t;
 const CRUMB = (p) => {
   const segs = p.slug.split('/').filter(Boolean);
   if (segs.length < 2) return '';
   const hub = '/' + segs[0] + '/';
   if (!HUBSETS[hub] && !CRUMBHUBS.has(hub)) return '';
-  return `<nav class="wl-crumb" aria-label="Breadcrumb"><a href="/">Home</a> <span>›</span> `
-    + `<a href="${hub}">${HUBLABEL[segs[0]] || segs[0]}</a> <span>›</span> <span>${p.h1}</span></nav>`;
+  const parts = [`<a href="/">Home</a>`, `<a href="${hub}">${HUBLABEL[segs[0]] || segs[0]}</a>`];
+  if (segs.length >= 3) {
+    const mid = '/' + segs[0] + '/' + segs[1] + '/';
+    parts.push(`<a href="${mid}">${LABELBYSLUG[mid] || segs[1]}</a>`);
+  }
+  parts.push(`<span>${p.crumbLeaf || p.h1}</span>`);
+  return `<nav class="wl-crumb" aria-label="Breadcrumb">` + parts.join(' <span>›</span> ') + `</nav>`;
 };
+// Metro grid shown on a flagship-trade industry page, linking its {trade}-in-{metro} children.
+const cityGrid = (kids) => `<section class="wl-sec"><div class="wl-prose"><h2>By metro</h2></div>`
+  + `<div class="wl-hubgrid">${kids.map(([h, t]) => `<a class="wl-hubcard" href="${h}"><b>${t}</b></a>`).join('')}</div></section>`;
 
 // Comparison hub card grid (with per-competitor blurb) and vs-page body (table + prose).
 const compareHubGrid = () => `<section class="wl-sec"><div class="wl-hubgrid">${(COMPARE?.hub.items || []).map(it =>
@@ -974,6 +1026,7 @@ const PAGE = async (p) => {
   if (p.comparehub) bodySecs.push(compareHubGrid());
   if (p.compare) { if (p.compare.faq) c.faq = p.compare.faq; bodySecs.push(compareBody(p.compare)); }
   if (p._intro) bodySecs.push(`<section class="wl-sec"><div class="wl-prose">${p._intro}</div></section>`);
+  if (CITYCHILDREN[p.slug]) bodySecs.push(cityGrid(CITYCHILDREN[p.slug]));
   if (c.introHtml) bodySecs.push(c.introHtml);
   for (const s of p.sections) bodySecs.push(rewrite(await readFrag(`sec-${s}.html`)));
   if (c.afterHtml) bodySecs.push(c.afterHtml);
