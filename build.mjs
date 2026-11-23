@@ -129,6 +129,13 @@ th{background:#f4f4f4}
 /* bottom bar */
 .wl-copy{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;color:#7c9087;border-top:1px solid rgba(255,255,255,.1);padding-top:18px;margin-top:34px;font-size:13px}
 .wl-copy a{color:#8ea39a}
+/* hub landing card grid + breadcrumb */
+.wl-hubgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin:10px 0}
+.wl-hubcard{display:block;padding:16px 18px;border:1px solid #e2e6e4;border-radius:12px;background:#fff;transition:border-color .15s,box-shadow .15s,transform .15s}
+.wl-hubcard:hover{border-color:#17a673;box-shadow:0 8px 22px rgba(0,0,0,.07);transform:translateY(-1px)}
+.wl-hubcard b{display:block;color:#0b1f19;font-size:15px}
+.wl-crumb{max-width:760px;margin:0 auto;padding:18px 0 0;font-size:13px;color:#5c6b64}
+.wl-crumb a{color:#17a673}.wl-crumb a:hover{text-decoration:underline}.wl-crumb span{color:#9aa8a1;margin:0 2px}
 @media(max-width:600px){h1{font-size:28px}.wl-lede{font-size:18px}.wl{padding:0 18px}.wl-foot-industry{columns:2 130px}}
 `;
 
@@ -206,6 +213,39 @@ const VERTICALS = [
   ["/local-seo-for-locksmiths/", "Locksmiths"],
 ];
 const ALLSET = [...NAVSET, ...SOLUTIONS, ...LEARN, ...TRACKING, ...VERTICALS];
+
+// ---- pillar->cluster hierarchy ----
+// Flat top-level slugs are nested under four hubs: /industries/, /solutions/, /tracking/, /learn/.
+// REMAP is old-slug -> new-slug. CONTENT/FAQS stay keyed by the ORIGINAL slug (p.ckey); every
+// other use of p.slug (canonical, OG, sitemap, file path, page-relative links) takes the NEW slug.
+// Old flat URLs get a redirect stub written at build time so nothing 404s. Product/root pages
+// (home, how-it-works, features, the-numbers, exclusive-data, google/apple-maps, pricing, faq)
+// stay at the root as the money/keyword pages.
+const REMAP = {
+  '/for-agencies/': '/solutions/agencies/',
+  '/multi-location-rank-tracking/': '/solutions/multi-location/',
+  '/local-pack-tracking/': '/tracking/local-pack/',
+  '/google-business-profile-rank-tracking/': '/tracking/google-business-profile/',
+  '/near-me-rank-tracking/': '/tracking/near-me/',
+  '/competitor-rank-tracking/': '/tracking/competitor/',
+  '/time-lapse-rank-tracking/': '/tracking/time-lapse/',
+  '/rank-tracking-for-google-and-apple-maps/': '/tracking/google-and-apple-maps/',
+  '/scheduled-rank-tracking/': '/tracking/scheduled/',
+  '/what-is-geo-grid-rank-tracking/': '/learn/what-is-geo-grid/',
+  '/geo-grid-vs-keyword-rank-tracking/': '/learn/geo-grid-vs-keyword/',
+  '/geo-grid-scan-sizes-explained/': '/learn/grid-sizes/',
+  '/share-of-local-voice/': '/learn/share-of-local-voice/',
+  '/local-seo-reporting-guide/': '/learn/reporting-guide/',
+  '/branded-reports/': '/learn/branded-reports/',
+  '/api/': '/learn/api/',
+  '/local-seo-glossary/': '/learn/glossary/',
+};
+for (const [h] of VERTICALS) REMAP[h] = '/industries/' + h.replace('/local-seo-for-', '');
+const RM = (s) => REMAP[s] || s;
+// Repoint the nav/footer arrays to the new URLs (PRIMARY_NAV + ALLSET share these element refs).
+for (const arr of [NAVSET, SOLUTIONS, LEARN, TRACKING, VERTICALS]) for (const e of arr) e[0] = RM(e[0]);
+// Which cluster each hub lists.
+const HUBSETS = { '/industries/': VERTICALS, '/solutions/': SOLUTIONS, '/tracking/': TRACKING, '/learn/': LEARN };
 
 // Enrichment copy (Phase 2) is authored per-page in content.mjs and merged here.
 let CONTENT = {};
@@ -640,11 +680,11 @@ const FOOT = () => `<footer class="wl-foot"><div class="wl-foot-in">
   </div>
   <div class="wl-foot-cols">
     <div class="wl-foot-col"><b>Product</b>${NAVSET.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-    <div class="wl-foot-col"><b>Solutions</b>${SOLUTIONS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-    <div class="wl-foot-col"><b>Tracking</b>${TRACKING.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-    <div class="wl-foot-col"><b>Learn</b>${LEARN.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+    <div class="wl-foot-col"><b><a href="/solutions/">Solutions</a></b>${SOLUTIONS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+    <div class="wl-foot-col"><b><a href="/tracking/">Tracking</a></b>${TRACKING.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+    <div class="wl-foot-col"><b><a href="/learn/">Learn</a></b>${LEARN.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
     <div class="wl-foot-col"><b>Account</b><a href="${APP}/login">Sign in</a><a href="${APP}/signup">Create account</a></div>
-    <div class="wl-foot-col-wide"><b>By industry</b><div class="wl-foot-industry">${VERTICALS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div></div>
+    <div class="wl-foot-col-wide"><b><a href="/industries/">By industry</a></b><div class="wl-foot-industry">${VERTICALS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div></div>
   </div>
   <div class="wl-copy"><span>© ${new Date().getFullYear()} Eagle Eye</span><span><a href="${APP}/login">Sign in</a> · <a href="${APP}/signup">Create account</a></span></div>
   </div>
@@ -784,10 +824,67 @@ const ctaBand = () => `<section class="wl-sec wl-ctasec"><div class="wl-cta">
   <div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a><a class="wl-btn ghost big" href="${APP}/login">Sign in</a></div>
 </div></section>`;
 
+// ---- nest flat pages under hubs ----
+// Keep ckey (original slug) for CONTENT/FAQS lookup; move slug + file to the new nested URL.
+for (const p of PAGES) {
+  p.ckey = p.slug;
+  const nu = REMAP[p.slug];
+  if (nu) { p.slug = nu; p.file = nu.replace(/^\//, '') + 'index.html'; }
+}
+// Four pillar/hub landing pages. Opening copy grounded in competitor-IA research (2026-11-23):
+// Yext /industries model, GridMyBusiness features, BrightLocal "one pin tells you nothing",
+// Whitespark /guides — benefit-led, no invented stats.
+const HUBPAGES = [
+  { slug: '/industries/', file: 'industries/index.html', hub: '/industries/',
+    title: 'Local Rank Tracking by Industry — Eagle Eye',
+    desc: 'Pick your trade: see how Eagle Eye maps where that business ranks on Google and Apple Maps, block by block across the whole service area.',
+    h1: 'Local rank tracking for your industry',
+    lede: 'Local search behaves differently for every trade — the keywords, the service-area shape and the competitors all change. Pick your vertical and see where a business like yours wins the map and where it fades.',
+    sections: [] },
+  { slug: '/solutions/', file: 'solutions/index.html', hub: '/solutions/',
+    title: 'Solutions — Agencies & Multi-Location | Eagle Eye',
+    desc: 'Local rank tracking built for agencies proving SEO to clients and brands watching rank across every location — one account, one set of numbers, branded reports.',
+    h1: 'Built for how you work',
+    lede: 'One agency managing fifty clients, or one brand managing fifty locations — Eagle Eye turns scattered map rankings into one clear, shareable picture. Client workspaces, a grid per location, and branded reports that make progress obvious, without a spreadsheet.',
+    sections: [] },
+  { slug: '/tracking/', file: 'tracking/index.html', hub: '/tracking/',
+    title: 'Local Rank Tracking Types — Geo-Grid | Eagle Eye',
+    desc: 'Local pack, Business Profile, near-me, competitor, Google and Apple Maps tracking — one geo-grid scan measures them all, point by point, on a schedule.',
+    h1: 'Every way to track local rank',
+    lede: 'One pin tells you almost nothing. Eagle Eye checks hundreds of points across the service area, so you see where a business wins, where it fades, and who is taking the customers it can’t see — local pack, Google and Apple Maps, competitors and near-me, on a schedule.',
+    sections: [] },
+  { slug: '/learn/', file: 'learn/index.html', hub: '/learn/',
+    title: 'Learn Geo-Grid Local SEO — Guides | Eagle Eye',
+    desc: 'What geo-grid rank tracking is, how LSOV/ARP/ATRP work, grid sizes, reporting and branded PDFs — the guides behind every Eagle Eye scan.',
+    h1: 'Learn geo-grid local SEO',
+    lede: 'New to geo-grid tracking, or explaining it to a client? Plain-English guides to how the grid works, what size to choose, how share-of-local-voice and ARP/ATRP are calculated, and how to turn a colour-coded map into a plan.',
+    sections: [] },
+];
+for (const p of HUBPAGES) p.ckey = p.slug;
+PAGES.push(...HUBPAGES);
+
+// Hub landing lists every child in its cluster as a card grid.
+const hubGrid = (hub) => {
+  const items = HUBSETS[hub] || [];
+  return `<section class="wl-sec"><div class="wl-hubgrid">${items.map(([h, t]) =>
+    `<a class="wl-hubcard" href="${h}"><b>${t}</b></a>`).join('')}</div></section>`;
+};
+// Two-way breadcrumb: every nested leaf links back up to its hub and home.
+const HUBLABEL = { industries: 'Industries', solutions: 'Solutions', tracking: 'Tracking', learn: 'Learn' };
+const CRUMB = (p) => {
+  const segs = p.slug.split('/').filter(Boolean);
+  if (segs.length < 2) return '';
+  const hub = '/' + segs[0] + '/';
+  if (!HUBSETS[hub]) return '';
+  return `<nav class="wl-crumb" aria-label="Breadcrumb"><a href="/">Home</a> <span>›</span> `
+    + `<a href="${hub}">${HUBLABEL[segs[0]] || segs[0]}</a> <span>›</span> <span>${p.h1}</span></nav>`;
+};
+
 const PAGE = async (p) => {
-  const c = { ...(CONTENT[p.slug] || {}) };
-  if (!c.faq && FAQS[p.slug]) c.faq = FAQS[p.slug];
+  const c = { ...(CONTENT[p.ckey] || {}) };
+  if (!c.faq && FAQS[p.ckey]) c.faq = FAQS[p.ckey];
   const bodySecs = [];
+  if (p.hub) bodySecs.push(hubGrid(p.hub));
   if (p._intro) bodySecs.push(`<section class="wl-sec"><div class="wl-prose">${p._intro}</div></section>`);
   if (c.introHtml) bodySecs.push(c.introHtml);
   for (const s of p.sections) bodySecs.push(rewrite(await readFrag(`sec-${s}.html`)));
@@ -815,6 +912,7 @@ ${ld.map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`
 ${NAV(p.slug)}
 <div class="wl">
 <main>
+${CRUMB(p)}
 <section class="wl-hero${p.home ? '' : ' wl-hero-sm'}">
   <div class="wl-hero-copy">
     ${p.home
@@ -846,7 +944,12 @@ ${FOOT()}
 // Absolute https:// links (canonical, OG, JSON-LD, the /app SaaS) start with a scheme, not "/",
 // so they are untouched.
 const localize = (html, slug) => {
-  const prefix = slug === '/' ? '' : '../';
+  // Rewrite any in-body link still pointing at an OLD flat slug to its new nested URL.
+  for (const [o, n] of Object.entries(REMAP)) html = html.split(`"${o}"`).join(`"${n}"`);
+  // Page-relative prefix = one "../" per path segment of this page's slug (home = none,
+  // /x/ = one, /industries/plumbers/ = two). Resolves on both the preview sub-path and root.
+  const depth = slug === '/' ? 0 : slug.split('/').filter(Boolean).length;
+  const prefix = '../'.repeat(depth);
   return html.replace(/\b(href|src)="\/(?!\/)([^"]*)"/g, (_m, attr, rest) => {
     const to = rest === '' ? (prefix || './') : prefix + rest; // href="/" -> home
     return `${attr}="${to}"`;
@@ -927,6 +1030,21 @@ for (const p of PAGES) {
   await mkdir(dirname(out), { recursive: true });
   await writeFile(out, html, 'utf8');
   count++;
+  // Redirect stub at the OLD flat URL so a shared/indexed old link never 404s.
+  if (p.ckey && p.ckey !== p.slug) {
+    const oldFile = p.ckey.replace(/^\//, '') + 'index.html';
+    const oldDepth = p.ckey.split('/').filter(Boolean).length;
+    const rel = '../'.repeat(oldDepth) + p.slug.replace(/^\//, '');
+    const stub = `<!doctype html><html lang="en"><head><meta charset="utf-8">`
+      + `<title>Moved — Eagle Eye</title><meta name="robots" content="noindex,follow">`
+      + `<link rel="canonical" href="${ORIGIN}${p.slug}">`
+      + `<meta http-equiv="refresh" content="0; url=${rel}">`
+      + `<link rel="icon" href="${ORIGIN}/app/logo.svg" type="image/svg+xml"></head>`
+      + `<body><p>This page moved to <a href="${rel}">${p.slug}</a>.</p></body></html>`;
+    const oldOut = join(DIST, oldFile);
+    await mkdir(dirname(oldOut), { recursive: true });
+    await writeFile(oldOut, stub, 'utf8');
+  }
 }
 // sitemap + robots
 const now = new Date().toISOString().slice(0, 10);
