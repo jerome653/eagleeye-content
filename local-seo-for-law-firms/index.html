@@ -17,14 +17,24 @@ body{margin:0;background:#fff;color:#1b1b1b;font:400 18px/1.7 -apple-system,"Seg
 .wl{max-width:820px;margin:0 auto;padding:0 24px}
 a{color:#0b5fb0;text-decoration:underline;text-underline-offset:2px}
 a:hover{color:#063e74}
-/* header */
-.wl-nav{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:20px 0 14px;border-bottom:1px solid #e3e3e3;margin-bottom:8px}
-.wl-brand{font-weight:700;font-size:19px;letter-spacing:.02em;text-decoration:none;color:#1b1b1b}
+/* ===== header: full-bleed sticky bar, inner wrapper breathes wider than the doc column ===== */
+.wl-nav{background:rgba(255,255,255,.92);backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid #e7e9ea;position:sticky;top:0;z-index:50}
+.wl-nav-in{max-width:1120px;margin:0 auto;padding:13px 24px;display:flex;align-items:center;gap:10px 26px}
+.wl-brand{display:inline-flex;align-items:center;gap:9px;font-weight:800;font-size:18px;letter-spacing:.06em;text-decoration:none;color:#141414;white-space:nowrap}
 .wl-brand .mark-2{color:#0b8057}
-.wl-links{display:flex;flex-wrap:wrap;gap:6px 16px}
-.wl-links a,.wl-acts a{font-size:15px}
-.wl-acts{margin-left:auto;display:flex;gap:14px;align-items:center}
+.wl-brand .wl-eye{width:20px;height:20px;border-radius:50%;border:3px solid #0b8057;position:relative;display:inline-block;flex:0 0 auto}
+.wl-brand .wl-eye::after{content:"";position:absolute;inset:4px;border-radius:50%;background:#0b8057}
+.wl-links{display:flex;flex-wrap:wrap;gap:4px 22px;margin-left:8px}
+.wl-links a{font-size:15px;font-weight:500;color:#3a3f45;padding:4px 0}
+.wl-links a[aria-current="page"]{color:#0b8057;font-weight:700}
+.wl-acts{margin-left:auto;display:flex;gap:16px;align-items:center}
+.wl-acts a{font-size:15px}
+.wl-acts .wl-link{color:#3a3f45;font-weight:500}
+/* chrome links (nav, footer, related) read as navigation, not prose: no underline at rest */
+.wl-links a,.wl-acts a,.wl-foot a,.wl-related-list a,.wl-brand{text-decoration:none}
+.wl-links a:hover,.wl-acts .wl-link:hover,.wl-foot a:hover,.wl-related-list a:hover{color:#0b8057;text-decoration:underline}
 .wl-menu-btn,.wl-menu,.wl-maps,.wl-hero-media,.wl-visual,.wl-map,.wl-grid,.wl-cell,.wl-readout,.wl-live,.wl-plus,.wl-squah{display:none!important}
+@media(max-width:820px){.wl-links{display:none}.wl-nav-in{gap:10px 14px}}
 /* hero */
 main{display:block}
 .wl-hero{padding:26px 0 6px}
@@ -68,19 +78,38 @@ b,strong{font-weight:700}
 table{border-collapse:collapse;width:100%;margin:1em 0;font-size:16px}
 th,td{border:1px solid #d7d7d7;padding:8px 10px;text-align:left}
 th{background:#f4f4f4}
-/* footer */
-.wl-foot{border-top:1px solid #e3e3e3;margin-top:28px;padding:24px 0 48px;display:flex;flex-wrap:wrap;gap:22px 36px;font-size:14px}
-.wl-foot-col{display:flex;flex-direction:column;gap:5px;flex:0 1 auto;min-width:140px}
-.wl-foot-col b{color:#1b1b1b;margin-bottom:5px;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
-.wl-foot-col a{color:#555;font-size:13.5px}
-.wl-foot-brand{flex:1 1 100%;margin-bottom:4px}
-.wl-foot-brand p{color:#555;margin:.35em 0 0;max-width:46ch}
+/* ===== footer: full-bleed tinted band, inner wrapper, structured columns ===== */
+.wl-foot{background:#0f1a17;color:#c7d2cd;margin-top:56px;font-size:14px}
+.wl-foot a{color:#aeb9b4}
+.wl-foot-in{max-width:1120px;margin:0 auto;padding:44px 24px 20px}
+/* top strip: brand + pitch on the left, a CTA on the right */
+.wl-foot-top{display:flex;flex-wrap:wrap;gap:18px 40px;align-items:flex-start;justify-content:space-between;padding-bottom:30px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:30px}
+.wl-foot-brand{max-width:360px}
+.wl-foot-brand .wl-brand{color:#fff;font-weight:800;font-size:18px;letter-spacing:.06em;display:inline-flex;align-items:center;gap:9px}
+.wl-foot-brand .wl-brand .mark-2{color:#2fbf8f}
+.wl-foot-brand .wl-eye{width:20px;height:20px;border-radius:50%;border:3px solid #2fbf8f;position:relative;display:inline-block}
+.wl-foot-brand .wl-eye::after{content:"";position:absolute;inset:4px;border-radius:50%;background:#2fbf8f}
+.wl-foot-brand p{color:#8ea39a;margin:.6em 0 0;line-height:1.5}
+.wl-foot-cta{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.wl-foot-cta .wl-btn{background:#17a673;color:#fff;padding:11px 20px;border-radius:7px;font-weight:600}
+.wl-foot-cta .wl-btn:hover{background:#1dbd84;text-decoration:none}
+.wl-foot-cta small{color:#7c908780}
+/* link columns */
+.wl-foot-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:26px 32px}
+.wl-foot-col{display:flex;flex-direction:column;gap:7px}
+.wl-foot-col b{color:#fff;margin-bottom:4px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.wl-foot-col a{font-size:13.5px;line-height:1.3}
+.wl-foot-col a:hover{color:#fff}
 /* the long by-industry list tiles into columns instead of one tall tower */
-.wl-foot-col-wide{flex:1 1 100%;display:block;columns:4 160px;column-gap:28px;margin-top:4px}
-.wl-foot-col-wide b{display:block;margin-bottom:8px;column-span:all;color:#1b1b1b;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
-.wl-foot-col-wide a{display:block;color:#555;font-size:13.5px;margin:4px 0;break-inside:avoid}
-.wl-copy{flex-basis:100%;color:#888;border-top:1px solid #eee;padding-top:14px;margin-top:10px}
-@media(max-width:600px){h1{font-size:28px}.wl-lede{font-size:18px}.wl{padding:0 18px}}
+.wl-foot-col-wide{grid-column:1/-1;margin-top:8px}
+.wl-foot-col-wide b{display:block;margin-bottom:10px;color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.wl-foot-industry{columns:5 150px;column-gap:28px}
+.wl-foot-industry a{display:block;font-size:13px;margin:5px 0;break-inside:avoid}
+.wl-foot-industry a:hover{color:#fff}
+/* bottom bar */
+.wl-copy{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;color:#7c9087;border-top:1px solid rgba(255,255,255,.1);padding-top:18px;margin-top:34px;font-size:13px}
+.wl-copy a{color:#8ea39a}
+@media(max-width:600px){h1{font-size:28px}.wl-lede{font-size:18px}.wl{padding:0 18px}.wl-foot-industry{columns:2 130px}}
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://eagleeye.sgen.com/#org","name":"Eagle Eye","url":"https://eagleeye.sgen.com","logo":"https://eagleeye.sgen.com/app/og-eagleeye.png"}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://eagleeye.sgen.com/#site","name":"Eagle Eye","url":"https://eagleeye.sgen.com","publisher":{"@id":"https://eagleeye.sgen.com/#org"}}</script>
@@ -88,14 +117,14 @@ th{background:#f4f4f4}
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://eagleeye.sgen.com/"},{"@type":"ListItem","position":2,"name":"Law firms","item":"https://eagleeye.sgen.com/local-seo-for-law-firms/"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","@id":"https://eagleeye.sgen.com/local-seo-for-law-firms/#faq","mainEntity":[{"@type":"Question","name":"How does Eagle Eye help a law firm with local SEO?","acceptedAnswer":{"@type":"Answer","text":"It shows which parts of a firm’s city find it on the map for searches like “personal injury lawyer near me”, and which find a competitor — across a grid of up to 441 points, not a single position."}},{"@type":"Question","name":"Can I see which firms outrank mine, and where?","acceptedAnswer":{"@type":"Answer","text":"Eagle Eye draws a competitor map for every rival that outranks you — their rank at every point of the same grid — so you see exactly which competitor wins each block, not just that you place #5."}},{"@type":"Question","name":"Does it track both Google and Apple Maps?","acceptedAnswer":{"@type":"Answer","text":"Yes. Eagle Eye runs the same geo-grid on Google Maps and on Apple Maps at the same price. Each scan reads one map, so run both and you get the two side by side — including the Apple picture most tools never measure."}},{"@type":"Question","name":"Can I report it with the firm’s branding?","acceptedAnswer":{"@type":"Answer","text":"Yes — export a white-label PDF or CSV with the firm’s own logo, colours and footer."}},{"@type":"Question","name":"What does it cost for a firm?","acceptedAnswer":{"@type":"Answer","text":"Every plan is a bucket of credits and a scan spends one credit per grid point: 81 credits for a 9 × 9 scan, up to 441 for a 21 × 21. Points you switch off or leave outside your shape cost nothing, and credits you buy never expire."}}]}</script>
 </head><body>
-<div class="wl">
-<header class="wl-nav" data-static="1">
-  <a class="wl-brand" href="../"><span class="mark-w"><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></a>
+<header class="wl-nav" data-static="1"><div class="wl-nav-in">
+  <a class="wl-brand" href="../"><span class="wl-eye"></span><span><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></a>
   <nav class="wl-links" aria-label="Pages"><a href="../how-it-works/">How it works</a><a href="../features/">Features</a><a href="../the-numbers/">The numbers</a><a href="../pricing/">Pricing</a><a href="../faq/">FAQ</a></nav>
   <div class="wl-acts"><a class="wl-link" href="https://eagleeye.sgen.com/app/login">Sign in</a><a class="wl-btn" href="https://eagleeye.sgen.com/app/signup">Get started</a>
     <button type="button" class="wl-menu-btn" aria-label="Menu" aria-expanded="false" onclick="var n=this.closest('.wl-nav');var o=n.classList.toggle('open');this.setAttribute('aria-expanded',o)"><i></i><i></i></button></div>
   <nav class="wl-menu" aria-label="Pages"><a href="../how-it-works/">How it works</a><a href="../features/">Features</a><a href="../the-numbers/">The numbers</a><a href="../data-never-on-the-market/">Exclusive data</a><a href="../google-maps-rank-tracking/">Google Maps</a><a href="../apple-maps-rank-tracking/">Apple Maps</a><a href="../pricing/">Pricing</a><a href="../faq/">FAQ</a><a href="https://eagleeye.sgen.com/app/login">Sign in</a></nav>
-</header>
+</div></header>
+<div class="wl">
 <main>
 <section class="wl-hero wl-hero-sm">
   <div class="wl-hero-copy">
@@ -135,16 +164,22 @@ th{background:#f4f4f4}
 </div>
 
 </main>
-<footer class="wl-foot">
-  <div class="wl-foot-brand"><div class="wl-brand"><span class="mark-w"><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></div>
-    <p>Geo-grid rank tracking for Google Maps and Apple Maps.</p></div>
-  <div class="wl-foot-col"><b>Product</b><a href="../how-it-works/">How it works</a><a href="../features/">Features</a><a href="../the-numbers/">The numbers</a><a href="../data-never-on-the-market/">Exclusive data</a><a href="../google-maps-rank-tracking/">Google Maps</a><a href="../apple-maps-rank-tracking/">Apple Maps</a><a href="../pricing/">Pricing</a><a href="../faq/">FAQ</a></div>
-  <div class="wl-foot-col"><b>Solutions</b><a href="../for-agencies/">For agencies</a><a href="../multi-location-rank-tracking/">Multi-location</a><a href="../local-seo-for-restaurants/">Restaurants</a><a href="../local-seo-for-dentists/">Dentists & medical</a><a href="../local-seo-for-home-services/">Home services</a><a href="../local-seo-for-law-firms/">Law firms</a></div>
-  <div class="wl-foot-col"><b>Tracking</b><a href="../local-pack-tracking/">Local pack tracking</a><a href="../google-business-profile-rank-tracking/">Business Profile (GBP)</a><a href="../near-me-rank-tracking/">Near me tracking</a><a href="../competitor-rank-tracking/">Competitor tracking</a><a href="../time-lapse-rank-tracking/">Time-lapse tracking</a><a href="../rank-tracking-for-google-and-apple-maps/">Google & Apple Maps</a></div>
-  <div class="wl-foot-col wl-foot-col-wide"><b>By industry</b><a href="../local-seo-for-retail/">Retail stores</a><a href="../local-seo-for-auto-repair/">Auto repair shops</a><a href="../local-seo-for-real-estate/">Real estate agents</a><a href="../local-seo-for-gyms-and-fitness/">Gyms & fitness studios</a><a href="../local-seo-for-salons-and-spas/">Salons & spas</a><a href="../local-seo-for-chiropractors/">Chiropractors</a><a href="../local-seo-for-veterinarians/">Veterinarians</a><a href="../local-seo-for-roofers/">Roofers</a><a href="../local-seo-for-med-spas/">Med spas</a><a href="../local-seo-for-hotels/">Hotels</a><a href="../local-seo-for-cleaning-services/">Cleaning services</a><a href="../local-seo-for-landscapers/">Landscapers</a><a href="../local-seo-for-pest-control/">Pest control</a><a href="../local-seo-for-electricians/">Electricians</a><a href="../local-seo-for-hvac/">HVAC companies</a><a href="../local-seo-for-car-dealerships/">Car dealerships</a><a href="../local-seo-for-urgent-care/">Urgent care</a><a href="../local-seo-for-coffee-shops/">Coffee shops</a><a href="../local-seo-for-insurance-agents/">Insurance agents</a><a href="../local-seo-for-moving-companies/">Moving companies</a><a href="../local-seo-for-plumbers/">Plumbers</a><a href="../local-seo-for-accountants/">Accountants & CPAs</a><a href="../local-seo-for-physical-therapy/">Physical therapy</a><a href="../local-seo-for-optometrists/">Optometrists</a><a href="../local-seo-for-barbers/">Barbershops</a><a href="../local-seo-for-florists/">Florists</a><a href="../local-seo-for-self-storage/">Self-storage</a><a href="../local-seo-for-locksmiths/">Locksmiths</a></div>
-  <div class="wl-foot-col"><b>Learn</b><a href="../what-is-geo-grid-rank-tracking/">What is geo-grid tracking</a><a href="../geo-grid-vs-keyword-rank-tracking/">Geo-grid vs keyword rank</a><a href="../geo-grid-scan-sizes-explained/">Grid sizes explained</a><a href="../share-of-local-voice/">Share of local voice</a><a href="../local-seo-reporting-guide/">Reporting guide</a><a href="../branded-reports/">Branded reports</a><a href="../scheduled-rank-tracking/">Scheduled scans & alerts</a><a href="../api/">API & integrations</a><a href="../local-seo-glossary/">Local SEO glossary</a></div>
-  <div class="wl-foot-col"><b>Account</b><a href="https://eagleeye.sgen.com/app/login">Sign in</a><a href="https://eagleeye.sgen.com/app/signup">Create account</a></div>
-  <div class="wl-copy"><small>© 2026 Eagle Eye</small><span class="wl-squah">Kind of service that makes you <b>SQUAHHH!</b></span></div>
-</footer>
 </div>
+<footer class="wl-foot"><div class="wl-foot-in">
+  <div class="wl-foot-top">
+    <div class="wl-foot-brand"><a class="wl-brand" href="../"><span class="wl-eye"></span><span><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></a>
+      <p>Geo-grid rank tracking for Google Maps and Apple Maps — see where a business ranks street by street, and prove the lift to every client.</p></div>
+    <div class="wl-foot-cta"><a class="wl-btn" href="https://eagleeye.sgen.com/app/signup">Start with 10 free scans</a><small>No card needed. Your first scan of your own site is free.</small></div>
+  </div>
+  <div class="wl-foot-cols">
+    <div class="wl-foot-col"><b>Product</b><a href="../how-it-works/">How it works</a><a href="../features/">Features</a><a href="../the-numbers/">The numbers</a><a href="../data-never-on-the-market/">Exclusive data</a><a href="../google-maps-rank-tracking/">Google Maps</a><a href="../apple-maps-rank-tracking/">Apple Maps</a><a href="../pricing/">Pricing</a><a href="../faq/">FAQ</a></div>
+    <div class="wl-foot-col"><b>Solutions</b><a href="../for-agencies/">For agencies</a><a href="../multi-location-rank-tracking/">Multi-location</a><a href="../local-seo-for-restaurants/">Restaurants</a><a href="../local-seo-for-dentists/">Dentists & medical</a><a href="../local-seo-for-home-services/">Home services</a><a href="../local-seo-for-law-firms/">Law firms</a></div>
+    <div class="wl-foot-col"><b>Tracking</b><a href="../local-pack-tracking/">Local pack tracking</a><a href="../google-business-profile-rank-tracking/">Business Profile (GBP)</a><a href="../near-me-rank-tracking/">Near me tracking</a><a href="../competitor-rank-tracking/">Competitor tracking</a><a href="../time-lapse-rank-tracking/">Time-lapse tracking</a><a href="../rank-tracking-for-google-and-apple-maps/">Google & Apple Maps</a></div>
+    <div class="wl-foot-col"><b>Learn</b><a href="../what-is-geo-grid-rank-tracking/">What is geo-grid tracking</a><a href="../geo-grid-vs-keyword-rank-tracking/">Geo-grid vs keyword rank</a><a href="../geo-grid-scan-sizes-explained/">Grid sizes explained</a><a href="../share-of-local-voice/">Share of local voice</a><a href="../local-seo-reporting-guide/">Reporting guide</a><a href="../branded-reports/">Branded reports</a><a href="../scheduled-rank-tracking/">Scheduled scans & alerts</a><a href="../api/">API & integrations</a><a href="../local-seo-glossary/">Local SEO glossary</a></div>
+    <div class="wl-foot-col"><b>Account</b><a href="https://eagleeye.sgen.com/app/login">Sign in</a><a href="https://eagleeye.sgen.com/app/signup">Create account</a></div>
+    <div class="wl-foot-col-wide"><b>By industry</b><div class="wl-foot-industry"><a href="../local-seo-for-retail/">Retail stores</a><a href="../local-seo-for-auto-repair/">Auto repair shops</a><a href="../local-seo-for-real-estate/">Real estate agents</a><a href="../local-seo-for-gyms-and-fitness/">Gyms & fitness studios</a><a href="../local-seo-for-salons-and-spas/">Salons & spas</a><a href="../local-seo-for-chiropractors/">Chiropractors</a><a href="../local-seo-for-veterinarians/">Veterinarians</a><a href="../local-seo-for-roofers/">Roofers</a><a href="../local-seo-for-med-spas/">Med spas</a><a href="../local-seo-for-hotels/">Hotels</a><a href="../local-seo-for-cleaning-services/">Cleaning services</a><a href="../local-seo-for-landscapers/">Landscapers</a><a href="../local-seo-for-pest-control/">Pest control</a><a href="../local-seo-for-electricians/">Electricians</a><a href="../local-seo-for-hvac/">HVAC companies</a><a href="../local-seo-for-car-dealerships/">Car dealerships</a><a href="../local-seo-for-urgent-care/">Urgent care</a><a href="../local-seo-for-coffee-shops/">Coffee shops</a><a href="../local-seo-for-insurance-agents/">Insurance agents</a><a href="../local-seo-for-moving-companies/">Moving companies</a><a href="../local-seo-for-plumbers/">Plumbers</a><a href="../local-seo-for-accountants/">Accountants & CPAs</a><a href="../local-seo-for-physical-therapy/">Physical therapy</a><a href="../local-seo-for-optometrists/">Optometrists</a><a href="../local-seo-for-barbers/">Barbershops</a><a href="../local-seo-for-florists/">Florists</a><a href="../local-seo-for-self-storage/">Self-storage</a><a href="../local-seo-for-locksmiths/">Locksmiths</a></div></div>
+  </div>
+  <div class="wl-copy"><span>© 2026 Eagle Eye</span><span><a href="https://eagleeye.sgen.com/app/login">Sign in</a> · <a href="https://eagleeye.sgen.com/app/signup">Create account</a></span></div>
+  </div>
+</footer>
 </body></html>
