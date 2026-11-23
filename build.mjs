@@ -145,6 +145,11 @@ th{background:#f4f4f4}
 .wl-cmp thead th:nth-child(2){color:#0b8057}
 .wl-cmp tbody th{font-weight:600;color:#0b1f19;width:28%}
 .wl-cmp td:nth-child(2){background:#f1faf6}
+/* free-tool credit calculator */
+.wl-calc{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;padding:18px;border:1px solid #e2e6e4;border-radius:12px;background:#fff;margin:14px 0}
+.wl-calc label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#5c6b64}
+.wl-calc select{padding:8px 10px;border:1px solid #cfd6d2;border-radius:8px;font-size:14px;background:#fff}
+.wl-calc-out{width:100%;margin:6px 0 0;font-size:16px;font-weight:600;color:#0b1f19}
 @media(max-width:600px){h1{font-size:28px}.wl-lede{font-size:18px}.wl{padding:0 18px}.wl-foot-industry{columns:2 130px}}
 `;
 
@@ -160,6 +165,7 @@ const NAVSET = [
   ['/pricing/', 'Pricing'],
   ['/faq/', 'FAQ'],
   ['/compare/', 'Compare'],
+  ['/free-tools/', 'Free tools'],
 ];
 // Primary top nav: lean brand-shaped set (mirrors the live welcome's 5-item nav — brand design),
 // so .wl-links fits one row without overlap. Full NAVSET stays in the mobile menu + footer.
@@ -887,6 +893,48 @@ if (COMPARE) {
   }
 }
 
+// Free, no-account tools. The geo-grid checker routes to the app's real free-first-scan (no card);
+// the credit calculator is a genuine static client-side tool — 1 credit per grid point, no backend, no spend.
+const FREETOOLS = [
+  { slug: '/free-tools/', file: 'free-tools/index.html',
+    title: 'Free Local SEO Tools — Geo-Grid Check | Eagle Eye',
+    desc: 'Free, no-account tools: run your first geo-grid rank scan free, and work out exactly how many credits a scan costs before you sign up.',
+    h1: 'Free local rank tools',
+    lede: 'Start free, no card. Run a real geo-grid scan on your own business, or work out what a scan will cost — before you sign up.',
+    sections: [],
+    _intro: `<div class="wl-hubgrid">`
+      + `<a class="wl-hubcard" href="/free-tools/geo-grid-checker/"><b>Free geo-grid check</b><span>Run your first scan on your own business — any grid size, no card.</span></a>`
+      + `<a class="wl-hubcard" href="/free-tools/scan-cost-calculator/"><b>Scan credit calculator</b><span>See exactly how many credits a grid size and schedule costs — before you sign up.</span></a>`
+      + `</div>` },
+  { slug: '/free-tools/geo-grid-checker/', file: 'free-tools/geo-grid-checker/index.html',
+    title: 'Free Geo-Grid Rank Check — No Card | Eagle Eye',
+    desc: 'See where a business ranks across its whole area on Google and Apple Maps — free. Your first geo-grid scan is free at any size, no card needed.',
+    h1: 'Free geo-grid rank check',
+    lede: 'See where a business really ranks on the map — your first scan is free, at any grid size, no card.',
+    sections: [],
+    _intro: `<p>Eagle Eye lays a grid over the whole service area and runs a real Google and Apple Maps search from every point, then rolls it into one number you can act on. Your first scan of your own business is free at any grid size, and no card is needed to run it.</p>`
+      + `<p>What the free scan shows you: your rank at every grid point, your Local Share of Voice, and the competitor map for every rival that outranks you on the map.</p>` },
+  { slug: '/free-tools/scan-cost-calculator/', file: 'free-tools/scan-cost-calculator/index.html',
+    title: 'Scan Credit Calculator — Geo-Grid | Eagle Eye',
+    desc: 'Work out how many credits a geo-grid scan costs: pick a grid size and how often it runs. One credit per grid point, no account needed.',
+    h1: 'Scan credit calculator',
+    lede: 'One credit scans one grid point. Pick a grid and a schedule to see the credits — no account needed.',
+    sections: [],
+    _intro: `<p>A scan spends one credit per grid point, so the credits depend only on the grid size and how often it runs. Pick both to see the cost. For the dollar price, see <a href="/pricing/">the plans</a> — credits you buy never expire.</p>`
+      + `<div class="wl-calc">`
+      + `<label>Grid size <select id="eeGrid">`
+      + `<option value="3">3 × 3 (9 points)</option><option value="5">5 × 5 (25 points)</option>`
+      + `<option value="7">7 × 7 (49 points)</option><option value="9" selected>9 × 9 (81 points)</option>`
+      + `<option value="11">11 × 11 (121 points)</option><option value="13">13 × 13 (169 points)</option>`
+      + `<option value="15">15 × 15 (225 points)</option><option value="21">21 × 21 (441 points)</option>`
+      + `</select></label>`
+      + `<label>How often <select id="eeFreq"><option value="1">Once</option><option value="4">Weekly (×4 / month)</option><option value="30">Daily (×30 / month)</option></select></label>`
+      + `<p class="wl-calc-out" id="eeOut"></p></div>`,
+    script: `<script>(function(){var g=document.getElementById('eeGrid'),f=document.getElementById('eeFreq'),o=document.getElementById('eeOut');function calc(){var n=+g.value,pts=n*n,mo=pts*(+f.value);o.textContent=pts+' credits per scan'+((+f.value>1)?' \\u00b7 '+mo+' credits per month':'')+' \\u2014 1 credit per grid point.';}g.onchange=f.onchange=calc;calc();})();</script>` },
+];
+for (const p of FREETOOLS) p.ckey = p.slug;
+PAGES.push(...FREETOOLS);
+
 // Hub landing lists every child in its cluster as a card grid.
 const hubGrid = (hub) => {
   const items = HUBSETS[hub] || [];
@@ -894,12 +942,13 @@ const hubGrid = (hub) => {
     `<a class="wl-hubcard" href="${h}"><b>${t}</b></a>`).join('')}</div></section>`;
 };
 // Two-way breadcrumb: every nested leaf links back up to its hub and home.
-const HUBLABEL = { industries: 'Industries', solutions: 'Solutions', tracking: 'Tracking', learn: 'Learn', compare: 'Compare' };
+const HUBLABEL = { industries: 'Industries', solutions: 'Solutions', tracking: 'Tracking', learn: 'Learn', compare: 'Compare', 'free-tools': 'Free tools' };
+const CRUMBHUBS = new Set(['/compare/', '/free-tools/']);
 const CRUMB = (p) => {
   const segs = p.slug.split('/').filter(Boolean);
   if (segs.length < 2) return '';
   const hub = '/' + segs[0] + '/';
-  if (!HUBSETS[hub] && hub !== '/compare/') return '';
+  if (!HUBSETS[hub] && !CRUMBHUBS.has(hub)) return '';
   return `<nav class="wl-crumb" aria-label="Breadcrumb"><a href="/">Home</a> <span>›</span> `
     + `<a href="${hub}">${HUBLABEL[segs[0]] || segs[0]}</a> <span>›</span> <span>${p.h1}</span></nav>`;
 };
@@ -971,6 +1020,7 @@ ${p.home ? FINAL() : ''}
 </main>
 </div>
 ${FOOT()}
+${p.script || ''}
 </body></html>`;
   return localize(head, p.slug);
 };
