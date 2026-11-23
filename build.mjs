@@ -22,7 +22,81 @@ const OGIMG = ORIGIN + '/app/og-eagleeye.png';
 const ASSETVER = createHash('sha1').update(readFileSync(join(ROOT, 'src/app/pages.css'))).digest('hex').slice(0, 10);
 
 const readFrag = async (f) => existsSync(join(FRG, f)) ? await readFile(join(FRG, f), 'utf8') : '';
-const shell = JSON.parse(await readFile(join(FRG, '_shell.json'), 'utf8'));
+// Fragments are optional: this build renders plain, self-contained document pages from
+// content.mjs + faqs.mjs + the page map alone, so it runs with no captured SPA fragments.
+const shell = existsSync(join(FRG, '_shell.json')) ? JSON.parse(readFileSync(join(FRG, '_shell.json'), 'utf8')) : {};
+
+// PLAIN document stylesheet (Jerome 2026-11-23: "plain content like word"). Inlined per page
+// so every page is fully self-contained — no external CSS/JS/font, nothing to break on Pages.
+// Readable single-column document: clean headings, body prose, lists, simple tables. The old
+// wl-* app classes stay in the markup and are styled plainly here; decorative blocks are hidden.
+const PLAINCSS = `
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:#fff;color:#1b1b1b;font:400 18px/1.7 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wl{max-width:820px;margin:0 auto;padding:0 24px}
+a{color:#0b5fb0;text-decoration:underline;text-underline-offset:2px}
+a:hover{color:#063e74}
+/* header */
+.wl-nav{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:20px 0 14px;border-bottom:1px solid #e3e3e3;margin-bottom:8px}
+.wl-brand{font-weight:700;font-size:19px;letter-spacing:.02em;text-decoration:none;color:#1b1b1b}
+.wl-brand .mark-2{color:#0b8057}
+.wl-links{display:flex;flex-wrap:wrap;gap:6px 16px}
+.wl-links a,.wl-acts a{font-size:15px}
+.wl-acts{margin-left:auto;display:flex;gap:14px;align-items:center}
+.wl-menu-btn,.wl-menu,.wl-maps,.wl-hero-media,.wl-visual,.wl-map,.wl-grid,.wl-cell,.wl-readout,.wl-live,.wl-plus,.wl-squah{display:none!important}
+/* hero */
+main{display:block}
+.wl-hero{padding:26px 0 6px}
+h1{font-size:34px;line-height:1.2;font-weight:700;margin:.2em 0 .35em}
+.wl-line{display:block}
+.wl-lede{font-size:20px;line-height:1.55;color:#333;margin:.4em 0 1em}
+.wl-ctas{margin:14px 0}
+.wl-btn,.wl-btn.big{display:inline-block;background:#0b8057;color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:600;font-size:16px;margin-right:10px}
+.wl-btn.ghost{background:#fff;color:#0b8057;border:1px solid #0b8057}
+.wl-note{font-size:14px;color:#666}
+/* body sections */
+.wl-body{padding:6px 0 10px}
+.wl-sec{padding:18px 0;border-top:1px solid #ececec}
+.wl-sec:first-child{border-top:0}
+.wl-prose,.wl-head{max-width:none}
+h2{font-size:25px;line-height:1.25;font-weight:700;margin:1.1em 0 .4em}
+h3{font-size:20px;font-weight:700;margin:1.2em 0 .3em}
+p{margin:.6em 0}
+ul,ol{margin:.6em 0;padding-left:1.3em}
+li{margin:.3em 0}
+b,strong{font-weight:700}
+.wl-k{font-weight:600;color:#0b8057}
+/* numbers */
+.wl-nums{display:block;margin:.4em 0}
+.wl-numcard{padding:10px 0;border-top:1px dotted #ddd}
+.wl-numcard b{font-size:17px}
+.wl-numname{color:#555;font-style:italic;margin-left:8px}
+/* faq */
+.wl-faq .wl-q{border-bottom:1px solid #eaeaea;padding:8px 0}
+.wl-q summary{cursor:pointer;font-weight:600;font-size:17px;list-style:none}
+.wl-q summary::-webkit-details-marker{display:none}
+.wl-q[open] summary{margin-bottom:6px}
+.wl-q p{color:#333}
+/* related */
+.wl-related-list{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px}
+.wl-related-list a{font-size:15px}
+/* cta band */
+.wl-cta{background:#f3f7f5;border:1px solid #d9e6e0;border-radius:8px;padding:20px 22px;margin:16px 0}
+.wl-cta h2{margin-top:0}
+/* tables */
+table{border-collapse:collapse;width:100%;margin:1em 0;font-size:16px}
+th,td{border:1px solid #d7d7d7;padding:8px 10px;text-align:left}
+th{background:#f4f4f4}
+/* footer */
+.wl-foot{border-top:1px solid #e3e3e3;margin-top:24px;padding:22px 0 40px;display:flex;flex-wrap:wrap;gap:18px 40px;font-size:14px}
+.wl-foot-col{display:flex;flex-direction:column;gap:4px}
+.wl-foot-col b{color:#1b1b1b;margin-bottom:4px}
+.wl-foot-col a{color:#555;font-size:13.5px}
+.wl-foot-brand{flex:1 1 200px}
+.wl-copy{flex-basis:100%;color:#888;border-top:1px solid #eee;padding-top:12px;margin-top:6px}
+@media(max-width:600px){h1{font-size:28px}.wl-lede{font-size:18px}.wl{padding:0 18px}}
+`;
 
 // ---- the page map: slug -> { title, desc, h1, lede, sections[], intro?, extraFaq? } ----
 // title <=60, desc <=155. lede = page H1 subhead. intro = enrichment paragraph(s) (true).
@@ -210,7 +284,7 @@ const PAGES = [
     sections: [] },
   { slug: '/local-seo-for-physical-therapy/', file: 'local-seo-for-physical-therapy/index.html',
     title: 'Local SEO for Physical Therapy Clinics — Eagle Eye',
-    desc: 'Track where a physical therapy clinic ranks for “physical therapy near me” across its catchment on Google and Apple Maps, point by point, with competitor maps.',
+    desc: 'See where a physical therapy clinic ranks for “physical therapy near me” across its catchment on Google and Apple Maps, point by point, with rival maps.',
     h1: 'Local SEO for physical therapy clinics',
     lede: 'Patients book the clinic they find first. See where a PT practice ranks across its catchment on the map, block by block.',
     sections: [] },
@@ -513,7 +587,7 @@ const rewrite = (html) => stripRender(deRed(html))
 
 // Faithful nav built from real wl-* classes, linking the full page set.
 const NAV = (cur) => `<header class="wl-nav" data-static="1">
-  <a class="wl-brand" href="/"><img src="/app/logo.svg" alt=""><span class="mark-w"><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></a>
+  <a class="wl-brand" href="/"><span class="mark-w"><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></a>
   <nav class="wl-links" aria-label="Pages">${PRIMARY_NAV.map(([h, t]) => `<a href="${h}"${h === cur ? ' aria-current="page"' : ''}>${t}</a>`).join('')}</nav>
   <div class="wl-acts"><a class="wl-link" href="${APP}/login">Sign in</a><a class="wl-btn" href="${APP}/signup">Get started</a>
     <button type="button" class="wl-menu-btn" aria-label="Menu" aria-expanded="false" onclick="var n=this.closest('.wl-nav');var o=n.classList.toggle('open');this.setAttribute('aria-expanded',o)"><i></i><i></i></button></div>
@@ -522,7 +596,7 @@ const NAV = (cur) => `<header class="wl-nav" data-static="1">
 
 // Faithful footer with full product column.
 const FOOT = () => `<footer class="wl-foot">
-  <div class="wl-foot-brand"><div class="wl-brand"><img src="/app/logo.svg" alt=""><span class="mark-w"><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></div>
+  <div class="wl-foot-brand"><div class="wl-brand"><span class="mark-w"><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></div>
     <p>Geo-grid rank tracking for Google Maps and Apple Maps.</p></div>
   <div class="wl-foot-col"><b>Product</b>${NAVSET.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
   <div class="wl-foot-col"><b>Solutions</b>${SOLUTIONS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
@@ -692,11 +766,7 @@ const PAGE = async (p) => {
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${p.title}">
 <meta name="twitter:description" content="${p.desc}"><meta name="twitter:image" content="${OGIMG}">
 <link rel="icon" href="/app/logo.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="/app/dashboard.css?v=${ASSETVER}">
-<link rel="stylesheet" href="/app/pages.css?v=${ASSETVER}">
-<script src="/app/theme.js?v=${ASSETVER}"></script>
+<style>${PLAINCSS}</style>
 ${ld.map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join('\n')}
 </head><body>
 <div class="wl">
@@ -704,7 +774,6 @@ ${NAV(p.slug)}
 <main>
 <section class="wl-hero${p.home ? '' : ' wl-hero-sm'}">
   <div class="wl-hero-copy">
-    <div class="wl-maps"><span class="on"><i></i>Google Maps</span><span class="on"><i></i>Apple Maps</span></div>
     ${p.home
       ? `<h1><span class="wl-line">Every street has a #1.</span><span class="wl-line wl-line-hot">Make it you.</span></h1>`
       : `<h1>${p.h1}</h1>`}
@@ -713,7 +782,6 @@ ${NAV(p.slug)}
     <p class="wl-note">No card needed. Your first scan of your own website is free at any size.</p>` :
     `<div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a></div>`}
   </div>
-  ${gridCard(p.slug)}
 </section>
 <div class="wl-body">
 ${bodySecs.join('\n')}
@@ -811,4 +879,7 @@ await writeFile(join(DIST, 'sitemap.xml'),
 // EE-ROBOTS-CONFIRM: noindex for now (Jerome, 2026-11-19) — the build stays out of the
 // index until the carry-back ship decision. Flip to `Allow: /` + per-page index,follow at ship.
 await writeFile(join(DIST, 'robots.txt'), `User-agent: *\nDisallow: /\n`, 'utf8');
-console.log(`built ${count} pages + sitemap + robots -> dist/`);
+// GitHub Pages serves raw files only when Jekyll is disabled — the build rm's dist each run,
+// so re-write .nojekyll every build (otherwise underscore/paths get Jekyll-processed).
+await writeFile(join(DIST, '.nojekyll'), '', 'utf8');
+console.log(`built ${count} pages + sitemap + robots + .nojekyll -> dist/`);
