@@ -55,6 +55,26 @@ a:hover{color:#063e74}
 .wl-links a:hover,.wl-acts .wl-link:hover,.wl-foot a:hover,.wl-related-list a:hover{color:#0b8057;text-decoration:underline}
 .wl-menu-btn,.wl-menu,.wl-maps,.wl-hero-media,.wl-visual,.wl-map,.wl-grid,.wl-cell,.wl-readout,.wl-live,.wl-plus,.wl-squah{display:none!important}
 @media(max-width:820px){.wl-links{display:none}.wl-nav-in{gap:10px 14px}}
+/* header hierarchy: pillar dropdowns (desktop) */
+.wl-nd{position:relative;display:inline-flex}
+.wl-nd-top{display:inline-flex;align-items:center;gap:3px}
+.wl-caret{font-size:10px;line-height:1;color:#9aa2a0}
+.wl-dd{position:absolute;top:100%;left:0;margin-top:10px;min-width:210px;background:#fff;border:1px solid #e7e9ea;border-radius:12px;box-shadow:0 14px 36px rgba(16,32,28,.15);padding:10px;display:none;z-index:60}
+.wl-dd::before{content:"";position:absolute;top:-10px;left:0;right:0;height:10px}
+.wl-dd a{display:block;font-size:14px;font-weight:500;color:#3a3f45;padding:7px 10px;border-radius:8px;white-space:nowrap}
+.wl-dd a:hover{background:#f1faf6;color:#0b8057;text-decoration:none}
+.wl-nd:hover>.wl-dd,.wl-nd:focus-within>.wl-dd{display:block}
+.wl-dd-wide{min-width:540px;column-count:3;column-gap:6px}
+.wl-dd-wide a{break-inside:avoid}
+/* header hierarchy: mobile hamburger menu (was dead — enable it with the same IA) */
+@media(max-width:820px){
+  .wl-menu-btn{display:inline-flex!important;flex-direction:column;justify-content:center;gap:4px;width:40px;height:34px;border:1px solid #d7dcd9;border-radius:9px;background:#fff;cursor:pointer;padding:0 9px}
+  .wl-menu-btn i{display:block;height:2px;width:100%;background:#2a2f2d;border-radius:2px}
+  .wl-nav.open .wl-menu{display:flex!important;flex-direction:column;position:absolute;top:100%;left:0;right:0;background:#fff;border-top:1px solid #e7e9ea;box-shadow:0 20px 40px rgba(16,32,28,.16);max-height:74vh;overflow:auto;padding:10px 20px 22px}
+  .wl-menu .wl-menu-h{font-size:15px;font-weight:700;color:#141414;padding:12px 0 4px;border-top:1px solid #eef1ef}
+  .wl-menu .wl-menu-h:first-child{border-top:0}
+  .wl-menu .wl-menu-sub{font-size:14px;color:#4a5551;padding:6px 0 6px 14px}
+}
 /* hero */
 main{display:block}
 .wl-hero{padding:26px 0 6px}
@@ -682,13 +702,28 @@ const rewrite = (html) => stripRender(deRed(html))
 const BRAND = `<a class="wl-brand" href="/"><span class="wl-eye"></span><span><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></a>`;
 
 // Reinvented header: full-bleed sticky bar, inner wrapper, lean primary nav, pill CTA.
-const NAV = (cur) => `<header class="wl-nav" data-static="1"><div class="wl-nav-in">
+// Header IA: the real pillar hierarchy. Each pillar links to its hub and drops its children.
+// Built at call time so COMPARE/FREETOOLS (defined later) are populated.
+const HEADERGROUPS = () => [
+  ['Product', '/how-it-works/', NAVSET.slice(0, 6)],
+  ['Industries', '/industries/', VERTICALS],
+  ['Solutions', '/solutions/', SOLUTIONS],
+  ['Tracking', '/tracking/', TRACKING],
+  ['Learn', '/learn/', LEARN],
+  ['Compare', '/compare/', (COMPARE?.hub.items || []).map((it) => [it.slug, 'vs ' + it.name])],
+  ['Free tools', '/free-tools/', (typeof FREETOOLS !== 'undefined' ? FREETOOLS : []).filter((p) => p.slug !== '/free-tools/').map((p) => [p.slug, p.h1])],
+  ['Pricing', '/pricing/', null],
+  ['FAQ', '/faq/', null],
+];
+const NAV = (cur) => { const G = HEADERGROUPS(); return `<header class="wl-nav" data-static="1"><div class="wl-nav-in">
   ${BRAND}
-  <nav class="wl-links" aria-label="Pages">${PRIMARY_NAV.map(([h, t]) => `<a href="${h}"${h === cur ? ' aria-current="page"' : ''}>${t}</a>`).join('')}</nav>
+  <nav class="wl-links" aria-label="Pages">${G.map(([label, href, items]) => items && items.length
+    ? `<div class="wl-nd"><a class="wl-nd-top" href="${href}">${label}<span class="wl-caret">▾</span></a><div class="wl-dd${label === 'Industries' ? ' wl-dd-wide' : ''}">${items.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div></div>`
+    : `<a href="${href}"${href === cur ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</nav>
   <div class="wl-acts"><a class="wl-link" href="${APP}/login">Sign in</a><a class="wl-btn" href="${APP}/signup">Get started</a>
     <button type="button" class="wl-menu-btn" aria-label="Menu" aria-expanded="false" onclick="var n=this.closest('.wl-nav');var o=n.classList.toggle('open');this.setAttribute('aria-expanded',o)"><i></i><i></i></button></div>
-  <nav class="wl-menu" aria-label="Pages">${NAVSET.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}<a href="${APP}/login">Sign in</a></nav>
-</div></header>`;
+  <nav class="wl-menu" aria-label="Pages">${G.map(([label, href, items]) => `<a class="wl-menu-h" href="${href}">${label}</a>` + (items && items.length ? items.map(([h, t]) => `<a class="wl-menu-sub" href="${h}">${t}</a>`).join('') : '')).join('')}<a href="${APP}/login">Sign in</a></nav>
+</div></header>`; };
 
 // Reinvented footer: tinted band, brand + CTA strip, structured columns, tiled industries, legal bar.
 const FOOT = () => `<footer class="wl-foot"><div class="wl-foot-in">
