@@ -1053,6 +1053,38 @@ const compareBody = (cp) => {
   return table + secs;
 };
 
+// Home enrichment: benefit-led depth between the hero and the numbers. Every claim traces to a
+// capability already asserted on a cluster page; cards link down into the hierarchy. The hero,
+// intro, numbers, FAQ and final CTA that James approved are untouched — this only adds between.
+const HOMEEXTRA = () => [
+  `<section class="wl-sec"><div class="wl-prose"><h2>From invisible to undeniable, in three moves</h2>`
+  + `<p>Local SEO is abstract until a client sees it on a map. Eagle Eye makes the whole job visible — the gap, the lift, and the win — so the work sells itself.</p></div>`
+  + `<div class="wl-hubgrid">`
+  + `<a class="wl-hubcard" href="/how-it-works/"><b>1 · Find the gap</b><span>One scan shows every block where a business is invisible — and who is taking those customers instead.</span></a>`
+  + `<a class="wl-hubcard" href="/tracking/scheduled/"><b>2 · Prove the lift</b><span>Put the scan on a schedule and watch Local Share of Voice climb, run after run.</span></a>`
+  + `<a class="wl-hubcard" href="/learn/branded-reports/"><b>3 · Report the win</b><span>Hand over a branded PDF with your name on it and the map that proves the result.</span></a>`
+  + `</div></section>`,
+  `<section class="wl-sec"><div class="wl-prose"><h2>Everything one scan gives you</h2></div>`
+  + `<div class="wl-hubgrid">`
+  + `<a class="wl-hubcard" href="/features/"><b>Rank at every point</b><span>A real Google and Apple Maps search from up to 441 points across the whole area.</span></a>`
+  + `<a class="wl-hubcard" href="/the-numbers/"><b>LSOV, ARP &amp; ATRP</b><span>Three numbers that turn a grid of pins into an answer a client remembers.</span></a>`
+  + `<a class="wl-hubcard" href="/tracking/competitor/"><b>Competitor map</b><span>Every rival that outranks you, named point by point across the grid.</span></a>`
+  + `<a class="wl-hubcard" href="/tracking/scheduled/"><b>Scheduled scans</b><span>Set a rhythm and the trend builds itself — nobody has to remember to run it.</span></a>`
+  + `<a class="wl-hubcard" href="/learn/branded-reports/"><b>Branded reports</b><span>White-label PDF and CSV with your logo, ready to send.</span></a>`
+  + `<a class="wl-hubcard" href="/tracking/google-and-apple-maps/"><b>Google + Apple</b><span>Both maps, same grid, same price — the Apple surface most tools ignore.</span></a>`
+  + `</div></section>`,
+  `<section class="wl-sec"><div class="wl-prose"><h2>Data a rank checker never shows you</h2>`
+  + `<p>Every rival's map, open-or-closed point by point, review counts moving between scans, the full top 20 everywhere — up to 8,820 listings from a single 21 × 21 scan. <a href="/data-never-on-the-market/">See the six things only a geo-grid records →</a></p></div></section>`,
+  `<section class="wl-sec"><div class="wl-prose"><h2>Built for the people who have to prove it</h2></div>`
+  + `<div class="wl-hubgrid">`
+  + `<a class="wl-hubcard" href="/solutions/agencies/"><b>Agencies</b><span>Show every client where they rank — and exactly what your work moved.</span></a>`
+  + `<a class="wl-hubcard" href="/solutions/multi-location/"><b>Multi-location brands</b><span>One grid per location, every market on the same dashboard.</span></a>`
+  + `<a class="wl-hubcard" href="/industries/"><b>28 local industries</b><span>From plumbers to med spas — the map pack is where the calls start.</span></a>`
+  + `</div></section>`,
+  `<section class="wl-sec"><div class="wl-prose"><h2>Why teams move to Eagle Eye</h2>`
+  + `<p>Most geo-grid tools stop at Google and reset your credits every month. Eagle Eye grids <b>Google and Apple at the same price</b>, your <b>credits never expire</b>, and your <b>first scan is free</b> — no card. See it next to the tool you run now.</p>`
+  + `<p><a class="wl-btn" href="/compare/">Compare Eagle Eye to Local Falcon, BrightLocal &amp; more →</a></p></div></section>`,
+];
 const PAGE = async (p) => {
   const c = { ...(CONTENT[p.ckey] || {}) };
   if (!c.faq && FAQS[p.ckey]) c.faq = FAQS[p.ckey];
@@ -1063,6 +1095,7 @@ const PAGE = async (p) => {
   if (p._intro) bodySecs.push(`<section class="wl-sec"><div class="wl-prose">${p._intro}</div></section>`);
   if (CITYCHILDREN[p.slug]) bodySecs.push(cityGrid(CITYCHILDREN[p.slug]));
   if (c.introHtml) bodySecs.push(c.introHtml);
+  if (p.home) for (const s of HOMEEXTRA()) bodySecs.push(s);
   for (const s of p.sections) bodySecs.push(rewrite(await readFrag(`sec-${s}.html`)));
   if (c.afterHtml) bodySecs.push(c.afterHtml);
   // Numbers reinforcement on every page except the one that already is the numbers page.
