@@ -37,14 +37,24 @@ body{margin:0;background:#fff;color:#1b1b1b;font:400 18px/1.7 -apple-system,"Seg
 .wl{max-width:820px;margin:0 auto;padding:0 24px}
 a{color:#0b5fb0;text-decoration:underline;text-underline-offset:2px}
 a:hover{color:#063e74}
-/* header */
-.wl-nav{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:20px 0 14px;border-bottom:1px solid #e3e3e3;margin-bottom:8px}
-.wl-brand{font-weight:700;font-size:19px;letter-spacing:.02em;text-decoration:none;color:#1b1b1b}
+/* ===== header: full-bleed sticky bar, inner wrapper breathes wider than the doc column ===== */
+.wl-nav{background:rgba(255,255,255,.92);backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid #e7e9ea;position:sticky;top:0;z-index:50}
+.wl-nav-in{max-width:1120px;margin:0 auto;padding:13px 24px;display:flex;align-items:center;gap:10px 26px}
+.wl-brand{display:inline-flex;align-items:center;gap:9px;font-weight:800;font-size:18px;letter-spacing:.06em;text-decoration:none;color:#141414;white-space:nowrap}
 .wl-brand .mark-2{color:#0b8057}
-.wl-links{display:flex;flex-wrap:wrap;gap:6px 16px}
-.wl-links a,.wl-acts a{font-size:15px}
-.wl-acts{margin-left:auto;display:flex;gap:14px;align-items:center}
+.wl-brand .wl-eye{width:20px;height:20px;border-radius:50%;border:3px solid #0b8057;position:relative;display:inline-block;flex:0 0 auto}
+.wl-brand .wl-eye::after{content:"";position:absolute;inset:4px;border-radius:50%;background:#0b8057}
+.wl-links{display:flex;flex-wrap:wrap;gap:4px 22px;margin-left:8px}
+.wl-links a{font-size:15px;font-weight:500;color:#3a3f45;padding:4px 0}
+.wl-links a[aria-current="page"]{color:#0b8057;font-weight:700}
+.wl-acts{margin-left:auto;display:flex;gap:16px;align-items:center}
+.wl-acts a{font-size:15px}
+.wl-acts .wl-link{color:#3a3f45;font-weight:500}
+/* chrome links (nav, footer, related) read as navigation, not prose: no underline at rest */
+.wl-links a,.wl-acts a,.wl-foot a,.wl-related-list a,.wl-brand{text-decoration:none}
+.wl-links a:hover,.wl-acts .wl-link:hover,.wl-foot a:hover,.wl-related-list a:hover{color:#0b8057;text-decoration:underline}
 .wl-menu-btn,.wl-menu,.wl-maps,.wl-hero-media,.wl-visual,.wl-map,.wl-grid,.wl-cell,.wl-readout,.wl-live,.wl-plus,.wl-squah{display:none!important}
+@media(max-width:820px){.wl-links{display:none}.wl-nav-in{gap:10px 14px}}
 /* hero */
 main{display:block}
 .wl-hero{padding:26px 0 6px}
@@ -88,19 +98,38 @@ b,strong{font-weight:700}
 table{border-collapse:collapse;width:100%;margin:1em 0;font-size:16px}
 th,td{border:1px solid #d7d7d7;padding:8px 10px;text-align:left}
 th{background:#f4f4f4}
-/* footer */
-.wl-foot{border-top:1px solid #e3e3e3;margin-top:28px;padding:24px 0 48px;display:flex;flex-wrap:wrap;gap:22px 36px;font-size:14px}
-.wl-foot-col{display:flex;flex-direction:column;gap:5px;flex:0 1 auto;min-width:140px}
-.wl-foot-col b{color:#1b1b1b;margin-bottom:5px;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
-.wl-foot-col a{color:#555;font-size:13.5px}
-.wl-foot-brand{flex:1 1 100%;margin-bottom:4px}
-.wl-foot-brand p{color:#555;margin:.35em 0 0;max-width:46ch}
+/* ===== footer: full-bleed tinted band, inner wrapper, structured columns ===== */
+.wl-foot{background:#0f1a17;color:#c7d2cd;margin-top:56px;font-size:14px}
+.wl-foot a{color:#aeb9b4}
+.wl-foot-in{max-width:1120px;margin:0 auto;padding:44px 24px 20px}
+/* top strip: brand + pitch on the left, a CTA on the right */
+.wl-foot-top{display:flex;flex-wrap:wrap;gap:18px 40px;align-items:flex-start;justify-content:space-between;padding-bottom:30px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:30px}
+.wl-foot-brand{max-width:360px}
+.wl-foot-brand .wl-brand{color:#fff;font-weight:800;font-size:18px;letter-spacing:.06em;display:inline-flex;align-items:center;gap:9px}
+.wl-foot-brand .wl-brand .mark-2{color:#2fbf8f}
+.wl-foot-brand .wl-eye{width:20px;height:20px;border-radius:50%;border:3px solid #2fbf8f;position:relative;display:inline-block}
+.wl-foot-brand .wl-eye::after{content:"";position:absolute;inset:4px;border-radius:50%;background:#2fbf8f}
+.wl-foot-brand p{color:#8ea39a;margin:.6em 0 0;line-height:1.5}
+.wl-foot-cta{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.wl-foot-cta .wl-btn{background:#17a673;color:#fff;padding:11px 20px;border-radius:7px;font-weight:600}
+.wl-foot-cta .wl-btn:hover{background:#1dbd84;text-decoration:none}
+.wl-foot-cta small{color:#7c908780}
+/* link columns */
+.wl-foot-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:26px 32px}
+.wl-foot-col{display:flex;flex-direction:column;gap:7px}
+.wl-foot-col b{color:#fff;margin-bottom:4px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.wl-foot-col a{font-size:13.5px;line-height:1.3}
+.wl-foot-col a:hover{color:#fff}
 /* the long by-industry list tiles into columns instead of one tall tower */
-.wl-foot-col-wide{flex:1 1 100%;display:block;columns:4 160px;column-gap:28px;margin-top:4px}
-.wl-foot-col-wide b{display:block;margin-bottom:8px;column-span:all;color:#1b1b1b;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
-.wl-foot-col-wide a{display:block;color:#555;font-size:13.5px;margin:4px 0;break-inside:avoid}
-.wl-copy{flex-basis:100%;color:#888;border-top:1px solid #eee;padding-top:14px;margin-top:10px}
-@media(max-width:600px){h1{font-size:28px}.wl-lede{font-size:18px}.wl{padding:0 18px}}
+.wl-foot-col-wide{grid-column:1/-1;margin-top:8px}
+.wl-foot-col-wide b{display:block;margin-bottom:10px;color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.wl-foot-industry{columns:5 150px;column-gap:28px}
+.wl-foot-industry a{display:block;font-size:13px;margin:5px 0;break-inside:avoid}
+.wl-foot-industry a:hover{color:#fff}
+/* bottom bar */
+.wl-copy{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;color:#7c9087;border-top:1px solid rgba(255,255,255,.1);padding-top:18px;margin-top:34px;font-size:13px}
+.wl-copy a{color:#8ea39a}
+@media(max-width:600px){h1{font-size:28px}.wl-lede{font-size:18px}.wl{padding:0 18px}.wl-foot-industry{columns:2 130px}}
 `;
 
 // ---- the page map: slug -> { title, desc, h1, lede, sections[], intro?, extraFaq? } ----
@@ -590,26 +619,35 @@ const rewrite = (html) => stripRender(deRed(html))
   .replace(/href="#plans"/g, 'href="/pricing/"')
   .replace(/href="#faq"/g, 'href="/faq/"');
 
-// Faithful nav built from real wl-* classes, linking the full page set.
-const NAV = (cur) => `<header class="wl-nav" data-static="1">
-  <a class="wl-brand" href="/"><span class="mark-w"><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></a>
+// Brand wordmark with a small "eye" glyph (pure CSS, no image dependency).
+const BRAND = `<a class="wl-brand" href="/"><span class="wl-eye"></span><span><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></a>`;
+
+// Reinvented header: full-bleed sticky bar, inner wrapper, lean primary nav, pill CTA.
+const NAV = (cur) => `<header class="wl-nav" data-static="1"><div class="wl-nav-in">
+  ${BRAND}
   <nav class="wl-links" aria-label="Pages">${PRIMARY_NAV.map(([h, t]) => `<a href="${h}"${h === cur ? ' aria-current="page"' : ''}>${t}</a>`).join('')}</nav>
   <div class="wl-acts"><a class="wl-link" href="${APP}/login">Sign in</a><a class="wl-btn" href="${APP}/signup">Get started</a>
     <button type="button" class="wl-menu-btn" aria-label="Menu" aria-expanded="false" onclick="var n=this.closest('.wl-nav');var o=n.classList.toggle('open');this.setAttribute('aria-expanded',o)"><i></i><i></i></button></div>
   <nav class="wl-menu" aria-label="Pages">${NAVSET.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}<a href="${APP}/login">Sign in</a></nav>
-</header>`;
+</div></header>`;
 
-// Faithful footer with full product column.
-const FOOT = () => `<footer class="wl-foot">
-  <div class="wl-foot-brand"><div class="wl-brand"><span class="mark-w"><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></div>
-    <p>Geo-grid rank tracking for Google Maps and Apple Maps.</p></div>
-  <div class="wl-foot-col"><b>Product</b>${NAVSET.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-  <div class="wl-foot-col"><b>Solutions</b>${SOLUTIONS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-  <div class="wl-foot-col"><b>Tracking</b>${TRACKING.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-  <div class="wl-foot-col wl-foot-col-wide"><b>By industry</b>${VERTICALS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-  <div class="wl-foot-col"><b>Learn</b>${LEARN.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-  <div class="wl-foot-col"><b>Account</b><a href="${APP}/login">Sign in</a><a href="${APP}/signup">Create account</a></div>
-  <div class="wl-copy"><small>© ${new Date().getFullYear()} Eagle Eye</small><span class="wl-squah">Kind of service that makes you <b>SQUAHHH!</b></span></div>
+// Reinvented footer: tinted band, brand + CTA strip, structured columns, tiled industries, legal bar.
+const FOOT = () => `<footer class="wl-foot"><div class="wl-foot-in">
+  <div class="wl-foot-top">
+    <div class="wl-foot-brand">${BRAND}
+      <p>Geo-grid rank tracking for Google Maps and Apple Maps — see where a business ranks street by street, and prove the lift to every client.</p></div>
+    <div class="wl-foot-cta"><a class="wl-btn" href="${APP}/signup">Start with 10 free scans</a><small>No card needed. Your first scan of your own site is free.</small></div>
+  </div>
+  <div class="wl-foot-cols">
+    <div class="wl-foot-col"><b>Product</b>${NAVSET.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+    <div class="wl-foot-col"><b>Solutions</b>${SOLUTIONS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+    <div class="wl-foot-col"><b>Tracking</b>${TRACKING.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+    <div class="wl-foot-col"><b>Learn</b>${LEARN.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+    <div class="wl-foot-col"><b>Account</b><a href="${APP}/login">Sign in</a><a href="${APP}/signup">Create account</a></div>
+    <div class="wl-foot-col-wide"><b>By industry</b><div class="wl-foot-industry">${VERTICALS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div></div>
+  </div>
+  <div class="wl-copy"><span>© ${new Date().getFullYear()} Eagle Eye</span><span><a href="${APP}/login">Sign in</a> · <a href="${APP}/signup">Create account</a></span></div>
+  </div>
 </footer>`;
 
 const FINAL = () => rewrite(shell.final || '');
@@ -774,8 +812,8 @@ const PAGE = async (p) => {
 <style>${PLAINCSS}</style>
 ${ld.map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join('\n')}
 </head><body>
-<div class="wl">
 ${NAV(p.slug)}
+<div class="wl">
 <main>
 <section class="wl-hero${p.home ? '' : ' wl-hero-sm'}">
   <div class="wl-hero-copy">
@@ -794,8 +832,8 @@ ${RELATED(p.slug)}
 </div>
 ${p.home ? FINAL() : ''}
 </main>
-${FOOT()}
 </div>
+${FOOT()}
 </body></html>`;
   return localize(head, p.slug);
 };
@@ -907,16 +945,16 @@ const page404 = `<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Page not found — Eagle Eye</title><meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/app/logo.svg" type="image/svg+xml">
-<style>${PLAINCSS}</style></head><body><div class="wl">
+<style>${PLAINCSS}</style></head><body>
 ${NAV('/404')}
-<main><section class="wl-hero"><div class="wl-hero-copy">
+<div class="wl"><main><section class="wl-hero"><div class="wl-hero-copy">
 <h1>That page isn’t here</h1>
 <p class="wl-lede">The link may be old or mistyped. Try the pages below, or head back to the start.</p>
 <div class="wl-ctas"><a class="wl-btn big" href="/">Back to home</a></div>
 </div></section>
-<div class="wl-body">${RELATED('/404')}</div></main>
+<div class="wl-body">${RELATED('/404')}</div></main></div>
 ${FOOT()}
-</div></body></html>`;
+</body></html>`;
 await writeFile(join(DIST, '404.html'),
   page404.replace(/\b(href|src)="\/(?!\/)([^"]*)"/g, (_m, attr, rest) => `${attr}="${ORIGIN}/${rest}"`),
   'utf8');
