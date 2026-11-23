@@ -879,6 +879,21 @@ await writeFile(join(DIST, 'sitemap.xml'),
 // EE-ROBOTS-CONFIRM: noindex for now (Jerome, 2026-11-19) — the build stays out of the
 // index until the carry-back ship decision. Flip to `Allow: /` + per-page index,follow at ship.
 await writeFile(join(DIST, 'robots.txt'), `User-agent: *\nDisallow: /\n`, 'utf8');
+// Plain 404 (same document style) so a bad path still lands on a branded, navigable page.
+await writeFile(join(DIST, '404.html'), `<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Page not found — Eagle Eye</title><meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/app/logo.svg" type="image/svg+xml">
+<style>${PLAINCSS}</style></head><body><div class="wl">
+${NAV('/404')}
+<main><section class="wl-hero"><div class="wl-hero-copy">
+<h1>That page isn’t here</h1>
+<p class="wl-lede">The link may be old or mistyped. Try the pages below, or head back to the start.</p>
+<div class="wl-ctas"><a class="wl-btn big" href="/">Back to home</a></div>
+</div></section>
+<div class="wl-body">${RELATED('/404')}</div></main>
+${FOOT()}
+</div></body></html>`, 'utf8');
 // GitHub Pages serves raw files only when Jekyll is disabled — the build rm's dist each run,
 // so re-write .nojekyll every build (otherwise underscore/paths get Jekyll-processed).
 await writeFile(join(DIST, '.nojekyll'), '', 'utf8');
