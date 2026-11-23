@@ -89,12 +89,17 @@ table{border-collapse:collapse;width:100%;margin:1em 0;font-size:16px}
 th,td{border:1px solid #d7d7d7;padding:8px 10px;text-align:left}
 th{background:#f4f4f4}
 /* footer */
-.wl-foot{border-top:1px solid #e3e3e3;margin-top:24px;padding:22px 0 40px;display:flex;flex-wrap:wrap;gap:18px 40px;font-size:14px}
-.wl-foot-col{display:flex;flex-direction:column;gap:4px}
-.wl-foot-col b{color:#1b1b1b;margin-bottom:4px}
+.wl-foot{border-top:1px solid #e3e3e3;margin-top:28px;padding:24px 0 48px;display:flex;flex-wrap:wrap;gap:22px 36px;font-size:14px}
+.wl-foot-col{display:flex;flex-direction:column;gap:5px;flex:0 1 auto;min-width:140px}
+.wl-foot-col b{color:#1b1b1b;margin-bottom:5px;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
 .wl-foot-col a{color:#555;font-size:13.5px}
-.wl-foot-brand{flex:1 1 200px}
-.wl-copy{flex-basis:100%;color:#888;border-top:1px solid #eee;padding-top:12px;margin-top:6px}
+.wl-foot-brand{flex:1 1 100%;margin-bottom:4px}
+.wl-foot-brand p{color:#555;margin:.35em 0 0;max-width:46ch}
+/* the long by-industry list tiles into columns instead of one tall tower */
+.wl-foot-col-wide{flex:1 1 100%;display:block;columns:4 160px;column-gap:28px;margin-top:4px}
+.wl-foot-col-wide b{display:block;margin-bottom:8px;column-span:all;color:#1b1b1b;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
+.wl-foot-col-wide a{display:block;color:#555;font-size:13.5px;margin:4px 0;break-inside:avoid}
+.wl-copy{flex-basis:100%;color:#888;border-top:1px solid #eee;padding-top:14px;margin-top:10px}
 @media(max-width:600px){h1{font-size:28px}.wl-lede{font-size:18px}.wl{padding:0 18px}}
 `;
 
@@ -792,7 +797,22 @@ ${p.home ? FINAL() : ''}
 ${FOOT()}
 </div>
 </body></html>`;
-  return head;
+  return localize(head, p.slug);
+};
+
+// GitHub Pages serves this repo under a sub-path (/eagleeye-content/), while the production
+// origin serves it at root. Root-absolute internal links (href="/how-it-works/") 404 on the
+// sub-path. Rewrite every internal root-relative href/src to a PAGE-RELATIVE path, which
+// resolves correctly on BOTH the preview sub-path and the production root. Every slug is a
+// single segment (/x/) or the home root (/), so a sub-page needs one "../" and home needs none.
+// Absolute https:// links (canonical, OG, JSON-LD, the /app SaaS) start with a scheme, not "/",
+// so they are untouched.
+const localize = (html, slug) => {
+  const prefix = slug === '/' ? '' : '../';
+  return html.replace(/\b(href|src)="\/(?!\/)([^"]*)"/g, (_m, attr, rest) => {
+    const to = rest === '' ? (prefix || './') : prefix + rest; // href="/" -> home
+    return `${attr}="${to}"`;
+  });
 };
 
 // ---- build ----
@@ -880,7 +900,10 @@ await writeFile(join(DIST, 'sitemap.xml'),
 // index until the carry-back ship decision. Flip to `Allow: /` + per-page index,follow at ship.
 await writeFile(join(DIST, 'robots.txt'), `User-agent: *\nDisallow: /\n`, 'utf8');
 // Plain 404 (same document style) so a bad path still lands on a branded, navigable page.
-await writeFile(join(DIST, '404.html'), `<!doctype html><html lang="en"><head>
+// A 404 is served for an unknown path, so the browser URL is not /404.html — page-relative
+// links cannot be resolved against it. Its internal links are made ABSOLUTE to the production
+// origin, which is correct from any path on either host.
+const page404 = `<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Page not found — Eagle Eye</title><meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/app/logo.svg" type="image/svg+xml">
@@ -893,7 +916,10 @@ ${NAV('/404')}
 </div></section>
 <div class="wl-body">${RELATED('/404')}</div></main>
 ${FOOT()}
-</div></body></html>`, 'utf8');
+</div></body></html>`;
+await writeFile(join(DIST, '404.html'),
+  page404.replace(/\b(href|src)="\/(?!\/)([^"]*)"/g, (_m, attr, rest) => `${attr}="${ORIGIN}/${rest}"`),
+  'utf8');
 // GitHub Pages serves raw files only when Jekyll is disabled — the build rm's dist each run,
 // so re-write .nojekyll every build (otherwise underscore/paths get Jekyll-processed).
 await writeFile(join(DIST, '.nojekyll'), '', 'utf8');
