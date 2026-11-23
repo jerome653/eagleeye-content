@@ -771,7 +771,7 @@ const gridCard = (slug) => {
 };
 // The three numbers every scan folds the grid into — definitions, no fabricated values.
 const numbersSection = () => `<section class="wl-sec wl-numsec"><div class="wl-head"><h2>Three numbers, every scan</h2>
-  <div class="wl-head-r"><p class="wl-lede">The whole grid rolls up into the figures a client actually remembers — tracked every run so the trend is the proof.</p></div></div>
+  <div class="wl-head-r"><p class="wl-lede">Three numbers a client remembers and a trend that proves your work paid off. Every scan rolls the whole grid into them — no spreadsheet, no hand-waving.</p></div></div>
   <div class="wl-nums">
     <div class="wl-numcard"><b>LSOV</b><span class="wl-numname">Local Share of Voice</span><p>How much of the whole grid finds the business near the top — one number for the entire map.</p></div>
     <div class="wl-numcard"><b>ARP</b><span class="wl-numname">Average Rank, found</span><p>The mean position across only the points that return the business at all.</p></div>
@@ -779,9 +779,9 @@ const numbersSection = () => `<section class="wl-sec wl-numsec"><div class="wl-h
   </div></section>`;
 // Closing conversion band (every page; home keeps its captured FINAL instead).
 const ctaBand = () => `<section class="wl-sec wl-ctasec"><div class="wl-cta">
-  <h2>Find out where you really rank</h2>
-  <p>Your first scan of your own site is free, at any grid size. No card needed.</p>
-  <div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a></div>
+  <h2>See the blocks you're winning — and the ones you're not</h2>
+  <p>Run a real geo-grid scan on your own business, any size, no card. In minutes you'll see every block you own, every block a rival is taking, and the one number you can hand a client.</p>
+  <div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a><a class="wl-btn ghost big" href="${APP}/login">Sign in</a></div>
 </div></section>`;
 
 const PAGE = async (p) => {
