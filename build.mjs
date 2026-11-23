@@ -165,6 +165,7 @@ th{background:#f4f4f4}
 .wl-cmp thead th:nth-child(2){color:#0b8057}
 .wl-cmp tbody th{font-weight:600;color:#0b1f19;width:28%}
 .wl-cmp td:nth-child(2){background:#f1faf6}
+.wl-cmp-note{font-size:12.5px;color:#7a837e;margin:8px 2px 0}
 /* free-tool credit calculator */
 .wl-calc{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;padding:18px;border:1px solid #e2e6e4;border-radius:12px;background:#fff;margin:14px 0}
 .wl-calc label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#5c6b64}
@@ -1047,7 +1048,7 @@ const compareBody = (cp) => {
   const table = `<section class="wl-sec"><div class="wl-cmp-wrap"><table class="wl-cmp">`
     + `<thead><tr><th></th><th>Eagle Eye</th><th>${cp.competitor}</th></tr></thead><tbody>`
     + cp.table.map(([d, a, b]) => `<tr><th>${d}</th><td>${a}</td><td>${b}</td></tr>`).join('')
-    + `</tbody></table></div></section>`;
+    + `</tbody></table><p class="wl-cmp-note">${cp.competitor} details as published on their own site, November 2026 — check their current plan before quoting.</p></div></section>`;
   const secs = (cp.sections || []).map(s =>
     `<section class="wl-sec"><div class="wl-prose"><h2>${s.h}</h2>${s.html}</div></section>`).join('');
   return table + secs;
