@@ -268,9 +268,15 @@ def _st(part):
 
 
 def p_wrench(c, part=RED):
+    """A spanner, leaning: a ring end at the foot, the shaft, and an open jaw at the top whose
+    mouth faces OUT along the shaft (a jaw opening towards the shaft reads as a candy cane)."""
     x, y, z = c
-    out = [box("PWrShaft", _st(part), (x, y, z + 0.3), (0.09, 0.07, 0.5), bevel=0.02, rot=[("Y", math.radians(-30))])]
-    out.append(arc_tube("PWrJaw", _st(part), (x + 0.15, y, z + 0.55), 0.1, 0.045, math.radians(-40), math.radians(220), segs=16, ring=8))
+    lean = math.radians(22)                               # the top leans to +x
+    at = lambda d: (x + 0.05 + d * math.sin(lean), y, z + 0.1 + d * math.cos(lean))
+    up = math.pi / 2 - lean                               # the shaft's direction in the XZ plane
+    out = [box("PWrShaft", _st(part), at(0.23), (0.075, 0.06, 0.34), bevel=0.015, rot=[("Y", lean)])]
+    out.append(arc_tube("PWrJaw", _st(part), at(0.46), 0.1, 0.04, up + math.radians(38), up + 2 * math.pi - math.radians(38), segs=18, ring=8))
+    out.append(arc_tube("PWrRing", _st(part), at(0.0), 0.065, 0.032, 0, 2 * math.pi, segs=16, ring=8))
     return out
 
 
@@ -377,13 +383,24 @@ def p_paw(c):
 
 
 def p_shingles(c):
+    """A roof being laid: a little gable house whose two slopes are courses of shingles (each
+    course stepped out over the one above it, as shingles lie), a ridge cap, and the hammer."""
     x, y, z = c
-    out = []
-    for r in range(4):
-        for k in range(3 - (r > 1)):
-            out.append(box(f"PShg{r}{k}", _st(RED if (r + k) % 2 == 0 else GRAPHITE), (x - 0.18 + k * 0.18 + r * 0.04, y, z + 0.08 + r * 0.12), (0.16, 0.3, 0.05), bevel=0.008, rot=[("X", math.radians(-25))]))
-    out.append(box("PShgHammer", _st(WHITE), (x + 0.3, y - 0.1, z + 0.25), (0.04, 0.04, 0.4), bevel=0.008))
-    out.append(box("PShgHead", _st(GRAPHITE), (x + 0.3, y - 0.1, z + 0.45), (0.16, 0.06, 0.06), bevel=0.01))
+    eave, ridge, half = 0.12, 0.44, 0.3
+    out = [slab("PShgGable", _st(WHITE), [(x - half + 0.02, z), (x + half - 0.02, z), (x + half - 0.02, z + eave), (x, z + ridge - 0.02), (x - half + 0.02, z + eave)], 0.36, y=y, bevel=0.008)]
+    th = math.atan2(ridge - eave, half)
+    run = math.hypot(half, ridge - eave) + 0.04
+    for side, sgn in ((0, -1), (1, 1)):
+        for r in range(3):
+            t = (r + 0.45) / 3.1                           # the top course stops at the ridge cap
+            px, pz = x + sgn * (half + 0.02 - (half + 0.02) * t), z + eave + (ridge - eave) * t
+            lift = 0.03 * (2 - r) / 2                       # lower courses sit proud of the upper
+            out.append(box(f"PShg{side}{r}", _st(RED if r % 2 == 0 else GRAPHITE),
+                           (px + sgn * math.sin(th) * lift, y, pz + 0.035 + math.cos(th) * lift), (run / 3 + 0.02, 0.44, 0.035),
+                           bevel=0.006, rot=[("Y", sgn * th)]))
+    out.append(cyl("PShgRidge", _st(WHITE), (x, y, z + ridge + 0.05), 0.03, 0.46, axis="Y", segs=12))
+    out.append(box("PShgHammer", _st(GRAPHITE), (x + 0.42, y - 0.12, z + 0.2), (0.035, 0.035, 0.38), bevel=0.008, rot=[("Y", math.radians(-12))]))
+    out.append(box("PShgHead", _st(GLOW), (x + 0.38, y - 0.12, z + 0.39), (0.16, 0.06, 0.06), bevel=0.01, rot=[("Y", math.radians(-12))]))
     return out
 
 
@@ -582,13 +599,18 @@ def l_spire(c):        # New York: a stepped tower with a spire
 
 def l_palms(c):        # Los Angeles: two palms
     out = []
+    # each frond an arc that rises out of the crown and droops (flat spokes read as a broken umbrella)
+    r = 0.17
     for k, (dx, h) in enumerate(((-0.12, 0.85), (0.14, 1.05))):
         x, y, z = c[0] + dx, c[1], c[2]
-        out.append(cyl(f"LLATrunk{k}", _lm(GRAPHITE), (x, y, z + h / 2), 0.03, h, segs=8, r2=0.02, bevel=0))
-        for j in range(6):
-            a = j * math.pi / 3
-            out.append(box(f"LLALeaf{k}{j}", _lm(RED if j % 2 else GLOW), (x + math.cos(a) * 0.13, y + math.sin(a) * 0.13, z + h - 0.03), (0.26, 0.05, 0.015), bevel=0,
-                           rot=[("Y", math.radians(25)), ("Z", a)]))
+        out.append(cyl(f"LLATrunk{k}", _lm(GRAPHITE), (x, y, z + h / 2), 0.035, h, segs=8, r2=0.02, bevel=0))
+        out.append(sphere(f"LLACrown{k}", _lm(GRAPHITE), (x, y, z + h), 0.04, segs=10))
+        for j in range(7):
+            a = j * 2 * math.pi / 7 + k * 0.4
+            fr = arc_tube(f"LLAFrond{k}{j}", _lm(RED if j % 2 else GLOW), (0.5 * r, 0, -0.866 * r), r, 0.02, math.radians(15), math.radians(120), segs=7, ring=4)
+            fr[0].location = (x, y, z + h)
+            fr[0].rotation_euler = (0, 0, a)
+            out.append(fr)
     return out
 
 
@@ -652,11 +674,17 @@ def l_sail(c):         # San Diego: a sailboat
 
 def l_ball(c):         # Dallas: a tower with a lit ball on top
     x, y, z = c
-    out = [cyl("LDAL", _lm(GRAPHITE), (x, y, z + 0.45), 0.06, 0.9, segs=14), sphere("LDALBall", _lm(GLOW), (x, y, z + 1.0), 0.16, segs=18)]
+    # three shafts under a lit ball banded by LATITUDE rings (great circles round a glowing
+    # orange ball read as a basketball's seams)
+    out = []
     for k in range(3):
-        out.append(arc_tube(f"LDALRing{k}", _lm(WHITE), (0, 0, 0), 0.165, 0.008, 0, 2 * math.pi, segs=24, ring=4))
-        out[-1][0].location = (x, y, z + 1.0)
-        out[-1][0].rotation_euler = (math.radians(60 * k), 0, 0)
+        a = k * 2 * math.pi / 3
+        out.append(cyl(f"LDAL{k}", _lm(GRAPHITE), (x + math.cos(a) * 0.05, y + math.sin(a) * 0.05, z + 0.45), 0.035, 0.9, segs=10))
+    out.append(cyl("LDALDeck", _lm(GRAPHITE), (x, y, z + 0.86), 0.1, 0.05, segs=18))
+    out.append(sphere("LDALBall", _lm(WHITE), (x, y, z + 1.02), 0.16, segs=20))
+    for k, dz in enumerate((-0.08, 0.0, 0.08)):
+        rr = math.sqrt(0.163 ** 2 - dz ** 2) + 0.004
+        out.append(arc_tube(f"LDALRing{k}", _lm(GLOW), (x, y, z + 1.02 + dz), rr, 0.012, 0, 2 * math.pi, plane="XY", segs=20, ring=4))
     return out
 
 
@@ -746,7 +774,10 @@ def film():
                                (0.16, 0.02, 0.16), bevel=0))
         for k in range(6):
             out.append(box(f"FMHole{f}{k}", stage(WHITE, f), (x - 0.38 + k * 0.152, y - 0.04, 0.53), (0.07, 0.02, 0.04), bevel=0))
-    out.append(slab("FMPlay", stage(GLOW, 3), [(0.62, -0.75), (0.62, -0.35), (0.95, -0.55)], 0.08, y=0.1, bevel=0.01))
+    # the play button: a disc with its triangle, standing by the strip's foot (it used to lie on the
+    # floor well below the frames, so the frames hung in the air above it)
+    out.append(cyl("FMPlayDisc", stage(GRAPHITE, 3), (0.92, -0.3, -0.25), 0.22, 0.06, axis="Y", segs=32))
+    out.append(slab("FMPlay", stage(GLOW, 3), [(0.86, -0.36), (0.86, -0.14), (1.03, -0.25)], 0.04, y=-0.35, bevel=0.005))
     return out
 
 
@@ -786,7 +817,7 @@ def scales(rival="block"):
     out = [cyl("SCBase", stage(GRAPHITE, 0), (0, 0, 0.04), 0.45, 0.08, segs=40),
            cyl("SCPole", stage(WHITE, 0), (0, 0, 0.6), 0.04, 1.1, segs=16),
            sphere("SCKnob", stage(RED, 1), (0, 0, 1.18), 0.08, segs=18)]
-    tilt = math.radians(-9)
+    tilt = math.radians(9)       # positive: the beam's +x end (Eagle Eye's pan) goes DOWN — it outweighs
     out.append(box("SCBeam", stage(RED, 1), (0, 0, 1.1), (1.7, 0.08, 0.07), bevel=0.02, rot=[("Y", tilt)]))
     for side, sgn in ((0, -1), (1, 1)):
         ex, ez = sgn * 0.8 * math.cos(tilt), 1.1 - sgn * 0.8 * math.sin(tilt)
@@ -847,14 +878,23 @@ def vault():
     out.append(cyl("VTCore", stage(GLOW, 2), (0, -0.1, 0.5), 0.3, 0.05, axis="Y", segs=32, bevel=0))
     for r in range(4):
         out.append(box(f"VTList{r}", stage(WHITE, 2), (0, -0.14, 0.62 - r * 0.08), (0.34 - abs(r - 1.5) * 0.06, 0.02, 0.035), bevel=0))
-    door = cyl("VTDoor", stage(RED, 3), (0, 0, 0), 0.42, 0.1, axis="Y", segs=36)
-    door[0].location = (-0.78, -0.35, 0.5); door[0].rotation_euler = (0, 0, math.radians(-65))
+    # The door hangs on a hinge at the left of the opening, swung 70 degrees out towards the viewer
+    # (it used to stand on its own beside the safe, and its wheel's spokes all lay on one line).
+    hx, hy, R, op = -0.46, -0.16, 0.42, math.radians(70)
+    out.append(cyl("VTHinge", stage(GRAPHITE, 3), (hx, hy - 0.02, 0.5), 0.045, 0.72, segs=14))
+    cx, cy = hx + (R + 0.03) * math.cos(op), hy - (R + 0.03) * math.sin(op)
+    door = cyl("VTDoor", stage(RED, 3), (0, 0, 0), R, 0.1, axis="Y", segs=36)
+    door[0].location = (cx, cy, 0.5); door[0].rotation_euler = (0, 0, -op)
     out.append(door)
-    for k in range(4):
-        a = k * math.pi / 2
-        sp = box(f"VTSpoke{k}", stage(WHITE, 3), (0, 0, 0), (0.3, 0.03, 0.03), bevel=0)
-        sp[0].location = (-0.78 + math.cos(math.radians(-65)) * -0.07, -0.35 - 0.07, 0.5); sp[0].rotation_euler = (a, 0, math.radians(-65))
+    # the wheel, on the door's outer face (closed, that face looks down -y; swung, it turns with it)
+    nx, ny = -math.sin(op), -math.cos(op)
+    for k in range(3):
+        sp = box(f"VTSpoke{k}", stage(WHITE, 3), (0, 0, 0), (0.34, 0.03, 0.03), bevel=0)
+        sp[0].location = (cx + nx * 0.07, cy + ny * 0.07, 0.5); sp[0].rotation_euler = (0, k * math.pi / 3, -op)
         out.append(sp)
+    hub = cyl("VTHub", stage(GLOW, 3), (0, 0, 0), 0.05, 0.05, axis="Y", segs=14, bevel=0)
+    hub[0].location = (cx + nx * 0.08, cy + ny * 0.08, 0.5); hub[0].rotation_euler = (0, 0, -op)
+    out.append(hub)
     return out
 
 
@@ -921,8 +961,10 @@ def glossary():
         out.append(box(f"GLBlock{k}", stage(WHITE if k != 1 else RED, k), (-0.45 + k * 0.45, 0, 0.2 + (k % 2) * 0.05), (0.4, 0.4, 0.4), bevel=0.04, segs=2))
     # the letters, as raised bars on each face (A: a peak, B: two bumps, C: an arc)
     out.append(slab("GLA", stage(GRAPHITE, 3), [(-0.58, 0.05), (-0.45, 0.38), (-0.32, 0.05), (-0.37, 0.05), (-0.45, 0.25), (-0.53, 0.05)], 0.03, y=-0.21, bevel=0))
-    out.append(arc_tube("GLB1", stage(WHITE, 3), (0.0, -0.21, 0.36), 0.08, 0.025, -math.pi / 2, math.pi / 2, segs=12, ring=5))
-    out.append(arc_tube("GLB2", stage(WHITE, 3), (0.0, -0.21, 0.2), 0.08, 0.025, -math.pi / 2, math.pi / 2, segs=12, ring=5))
+    out.append(box("GLABar", stage(GRAPHITE, 3), (-0.45, -0.21, 0.15), (0.17, 0.03, 0.04), bevel=0))   # A's crossbar
+    out.append(box("GLBSpine", stage(WHITE, 3), (-0.06, -0.21, 0.28), (0.05, 0.03, 0.37), bevel=0))   # B's upright
+    out.append(arc_tube("GLB1", stage(WHITE, 3), (-0.04, -0.21, 0.36), 0.08, 0.025, -math.pi / 2, math.pi / 2, segs=12, ring=5))
+    out.append(arc_tube("GLB2", stage(WHITE, 3), (-0.04, -0.21, 0.2), 0.08, 0.025, -math.pi / 2, math.pi / 2, segs=12, ring=5))
     out.append(arc_tube("GLC", stage(GRAPHITE, 3), (0.45, -0.21, 0.2), 0.12, 0.025, math.radians(45), math.radians(315), segs=16, ring=5))
     out.append(box("GLShelf", stage(GRAPHITE, 0), (0, 0, -0.03), (1.6, 0.6, 0.06), bevel=0.02))
     return out
@@ -985,9 +1027,20 @@ def magnifier():
         for k in range(6):
             d = max(abs(r - 2.5), abs(k - 2.5))
             out.append(box(f"MGCell{r}{k}", stage(HEAT[min(5, int(d * 1.6))], 1 if d > 1 else 2), (-0.6 + k * 0.24, -0.6 + r * 0.24, 0.04), (0.18, 0.18, 0.04 + (3 - d) * 0.04), bevel=0))
-    out.append(arc_tube("MGRim", stage(WHITE, 3), (0.1, -0.1, 0.75), 0.36, 0.05, 0, 2 * math.pi, plane="XY", segs=36, ring=8))
-    out.append(cyl("MGGlass", stage(GLOW, 3), (0.1, -0.1, 0.75), 0.33, 0.012, segs=32, bevel=0))
-    out.append(box("MGHandle", stage(GRAPHITE, 3), (0.62, -0.62, 0.62), (0.1, 0.1, 0.55), bevel=0.02, rot=[("X", math.radians(-40)), ("Z", math.radians(45))]))
+    # The lens is tipped 35 degrees towards the viewer (lying flat it read as a frisbee) and the
+    # handle runs straight out of the rim, down to the lower right.
+    tip, L = math.radians(35), Vector((0.0, 0.05, 0.95))
+    rot = Matrix.Rotation(tip, 3, "X")
+    for name, mk in (("MGRim", lambda: arc_tube("MGRim", stage(WHITE, 3), (0, 0, 0), 0.36, 0.05, 0, 2 * math.pi, plane="XY", segs=36, ring=8)),
+                     ("MGGlass", lambda: cyl("MGGlass", stage(GLOW, 3), (0, 0, 0), 0.33, 0.012, segs=32, bevel=0))):
+        ob = mk(); ob[0].location = L; ob[0].rotation_euler = (tip, 0, 0); out.append(ob)
+    d = rot @ Vector((0.7071, -0.7071, 0.0))
+    h = cyl("MGHandle", stage(GRAPHITE, 3), (0, 0, 0), 0.055, 0.5, segs=14)
+    h[0].location = L + d * (0.36 + 0.03 + 0.25)
+    h[0].rotation_mode = "QUATERNION"; h[0].rotation_quaternion = Vector((0, 0, 1)).rotation_difference(d)
+    out.append(h)
+    out.append(cyl("MGCollar", stage(RED, 3), (0, 0, 0), 0.07, 0.08, segs=14))
+    out[-1][0].location = L + d * 0.42; out[-1][0].rotation_mode = "QUATERNION"; out[-1][0].rotation_quaternion = Vector((0, 0, 1)).rotation_difference(d)
     return out
 
 

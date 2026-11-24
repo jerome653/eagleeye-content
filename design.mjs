@@ -79,7 +79,7 @@ export const transformProse = (html, label) => html.replace(
 // and the whole card is the link. items: [{ href, title, desc?, icon?, more? }]
 export const excl = (items, { letters = false, iconName = null } = {}) =>
   `<ol class="wl-excl wl-cards">${items.map((it, i) => `<li class="wl-glow" style="--i:${i % 9}">`
-    + `<span class="wl-excl-k" aria-hidden="true">${letters ? String.fromCharCode(65 + (i % 26)) : icon(it.icon || iconName || 'pin')}</span>`
+    + `<span class="wl-excl-k" aria-hidden="true">${letters ? String.fromCharCode(65 + (i % 26)) : (it.svg || icon(it.icon || iconName || 'pin'))}</span>`
     + `<b>${it.href ? `<a class="wl-card-link" href="${it.href}">${it.title}</a>` : it.title}</b>`
     + (it.desc ? `<p>${it.desc}</p>` : '')
     + (it.href ? `<span class="wl-new-more" aria-hidden="true">${it.more || 'Open'} →</span>` : '')

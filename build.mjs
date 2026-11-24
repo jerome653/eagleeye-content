@@ -572,14 +572,83 @@ const BRAND = (tag = 'a') => `<${tag} class="wl-brand"${tag === 'a' ? ' href="/"
 
 // Small line icons for the dropdown items (24-unit, stroked like the app's ICONS).
 const SVG = (d) => `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-const ICON = {
-  product: SVG('<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'),
-  solutions: SVG('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M21.5 20a6.5 6.5 0 0 0-4-6"/>'),
-  tracking: SVG('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'),
-  learn: SVG('<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>'),
-  compare: SVG('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/>'),
-  tools: SVG('<rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M8.5 6.5h7"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01M8.5 18h.01M12 18h.01M15.5 18h.01"/>'),
-};
+
+// One icon per dropdown item, each drawn for what that page is (24-unit line icons in the app's
+// stroke). The build stops if a header item has no icon or two items share one.
+const NAVICON = Object.fromEntries(Object.entries({
+  // Product
+  '/how-it-works/': '<circle cx="5" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 6h7a3 3 0 0 1 0 6h-4a3 3 0 0 0 0 6h7"/>',
+  '/features/': '<path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8z"/>',
+  '/the-numbers/': '<path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx=".5"/><rect x="12" y="8" width="3" height="10" rx=".5"/><rect x="17" y="5" width="3" height="13" rx=".5"/>',
+  '/data-never-on-the-market/': '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1.5"/>',
+  '/google-maps-rank-tracking/': '<path d="M9 4 3 6.5V20l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/>',
+  '/apple-maps-rank-tracking/': '<path d="M3 11l18-8-8 18-2-8z"/>',
+  // Solutions
+  '/solutions/agencies/': '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/>',
+  '/solutions/multi-location/': '<path d="M7 17s-4-3.5-4-7a4 4 0 0 1 8 0c0 3.5-4 7-4 7z"/><circle cx="7" cy="10" r="1.3"/><path d="M17 21s-4-3.5-4-7a4 4 0 0 1 8 0c0 3.5-4 7-4 7z"/><circle cx="17" cy="14" r="1.3"/>',
+  '/local-seo-for-restaurants/': '<path d="M6 3v7a2 2 0 0 0 4 0V3M8 10v11"/><path d="M18 21V3c-2.5 1.5-3.5 4.5-3.5 9H18"/>',
+  '/local-seo-for-dentists/': '<path d="M7 3C4.5 3 3 5 3 7.5c0 3 1.5 4.5 2 7 .5 3 1 6.5 2.5 6.5S9.5 17 12 17s2.5 4 4.5 4 2-3.5 2.5-6.5c.5-2.5 2-4 2-7C21 5 19.5 3 17 3c-2 0-3 1-5 1S9 3 7 3z"/>',
+  '/local-seo-for-home-services/': '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>',
+  '/local-seo-for-law-firms/': '<path d="M12 3v18M7 21h10M4 7h16"/><path d="M4 7l-2.5 6a3 3 0 0 0 5 0zM20 7l-2.5 6a3 3 0 0 0 5 0z"/>',
+  // Tracking
+  '/tracking/local-pack/': '<path d="M10 6h11M10 12h11M10 18h11"/><path d="M4 4.5h1.5V9M3.5 9h3"/><path d="M3.5 14.5a1.5 1.5 0 1 1 2.5 1.2L3.5 19h3"/>',
+  '/tracking/google-business-profile/': '<path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v9h14v-9M10 21v-5h4v5"/>',
+  '/tracking/near-me/': '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+  '/tracking/competitor/': '<path d="M8 21h8M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>',
+  '/tracking/time-lapse/': '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/>',
+  '/tracking/google-and-apple-maps/': '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+  '/tracking/scheduled/': '<rect x="3" y="5" width="13" height="13" rx="2"/><path d="M3 9h13M7 3v4M12 3v4"/><circle cx="17.5" cy="17.5" r="4"/><path d="M17.5 15.8v1.9l1.2.8"/>',
+  // Learn
+  '/learn/': '<path d="M2 5h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 5h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/>',
+  '/learn/what-is-geo-grid/': '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>',
+  '/learn/geo-grid-vs-keyword/': '<path d="M12 3v18"/><circle cx="6.5" cy="12" r="2.5"/><path d="M15 8h6M15 12h6M15 16h6"/>',
+  '/learn/grid-sizes/': '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>',
+  '/learn/share-of-local-voice/': '<path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>',
+  '/learn/reporting-guide/': '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 13l2 2 4-4"/>',
+  '/learn/branded-reports/': '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 17v-3M12 17v-5M16 17v-2"/>',
+  '/learn/api/': '<path d="M8 6l-6 6 6 6M16 6l6 6-6 6M14 4l-4 16"/>',
+  '/learn/glossary/': '<path d="M4 7V4h16v3M9 20h6M12 4v16"/>',
+  // Compare (each rival drawn as it stands in the compare page's scales)
+  '/compare/': '<path d="M7 4 3 8l4 4M3 8h13"/><path d="M17 12l4 4-4 4M21 16H8"/>',
+  '/compare/eagle-eye-vs-brightlocal/': '<rect x="4" y="14" width="16" height="6" rx="1"/><rect x="6" y="8" width="12" height="5" rx="1"/><rect x="8" y="3" width="8" height="4" rx="1"/>',
+  '/compare/eagle-eye-vs-whitespark/': '<path d="M12 2v5M12 17v5M2 12h5M17 12h5M5 5l3.5 3.5M15.5 15.5 19 19M19 5l-3.5 3.5M8.5 15.5 5 19"/>',
+  '/compare/eagle-eye-vs-localviking/': '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+  '/compare/eagle-eye-vs-gridmybusiness/': '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  // Free tools
+  '/free-tools/': '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>',
+  '/free-tools/geo-grid-checker/': '<circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/>',
+  '/free-tools/scan-cost-calculator/': '<rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M8.5 6.5h7M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01M8.5 18h.01M12 18h.01M15.5 18h.01"/>',
+  // Industries
+  '/industries/retail/': '<path d="M6 7h12l1 14H5z"/><path d="M9 7a3 3 0 0 1 6 0"/>',
+  '/industries/auto-repair/': '<path d="M5 17h14v-5l-2-5H7l-2 5z"/><path d="M5 12h14"/><circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/>',
+  '/industries/real-estate/': '<path d="M4 21V4h16"/><rect x="9" y="8" width="11" height="7" rx="1"/><path d="M12 4v4M17 4v4"/>',
+  '/industries/gyms-and-fitness/': '<path d="M6 7v10M18 7v10M3 9v6M21 9v6M6 12h12"/>',
+  '/industries/salons-and-spas/': '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M8.1 8.1 20 20M8.1 15.9 20 4"/>',
+  '/industries/chiropractors/': '<path d="M12 2v20"/><path d="M9 5h6M8 9h8M8 13h8M9 17h6"/>',
+  '/industries/veterinarians/': '<circle cx="12" cy="16" r="4"/><circle cx="5.5" cy="10" r="2"/><circle cx="9.5" cy="5.5" r="2"/><circle cx="14.5" cy="5.5" r="2"/><circle cx="18.5" cy="10" r="2"/>',
+  '/industries/roofers/': '<path d="M2 14 12 5l10 9"/><path d="M6 14h12M8.5 11h7"/><path d="M17 8.5V4h2v6.3"/>',
+  '/industries/med-spas/': '<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+  '/industries/hotels/': '<path d="M3 7v13M3 16h18v4M21 16v-4a3 3 0 0 0-3-3h-8v7"/><circle cx="7" cy="12" r="2"/>',
+  '/industries/cleaning-services/': '<path d="M9 8h5v3l2 3v7H7v-7l2-3z"/><path d="M9 8V5h6l3 2M19 4h.01M21 6h.01"/>',
+  '/industries/landscapers/': '<path d="M12 22v-6"/><path d="M12 3l6 8h-3l4 5H5l4-5H6z"/>',
+  '/industries/pest-control/': '<rect x="8" y="7" width="8" height="12" rx="4"/><path d="M12 7V5M9 3.5l1.5 1.5M15 3.5 13.5 5M8 11H4M8 15H4M16 11h4M16 15h4"/>',
+  '/industries/electricians/': '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+  '/industries/hvac/': '<path d="M12 2v20M3.3 7l17.4 10M20.7 7 3.3 17"/><path d="M9.5 4 12 6l2.5-2M9.5 20l2.5-2 2.5 2"/>',
+  '/industries/car-dealerships/': '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>',
+  '/industries/urgent-care/': '<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/>',
+  '/industries/coffee-shops/': '<path d="M4 8h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M16 10h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M8 2v3M12 2v3"/>',
+  '/industries/insurance-agents/': '<path d="M2 12a10 10 0 0 1 20 0z"/><path d="M12 12v7a2 2 0 0 1-4 0"/>',
+  '/industries/moving-companies/': '<path d="M2 6h11v11H2zM13 10h5l3 3v4h-8"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
+  '/industries/plumbers/': '<path d="M3 8h10a4 4 0 0 1 4 4v1"/><path d="M7 8V4M4 4h6"/><path d="M17 16.5s-2 2.2-2 3.5a2 2 0 0 0 4 0c0-1.3-2-3.5-2-3.5z"/>',
+  '/industries/accountants/': '<path d="M19 5 5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
+  '/industries/physical-therapy/': '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+  '/industries/optometrists/': '<circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M10 15a2 2 0 0 1 4 0M2 15l1.5-7M22 15l-1.5-7"/>',
+  '/industries/barbers/': '<rect x="8" y="5" width="8" height="14" rx="1"/><path d="M8 9l8-3M8 13l8-3M8 17l8-3M7 3h10M7 21h10"/>',
+  '/industries/florists/': '<circle cx="12" cy="4.5" r="2"/><circle cx="15.5" cy="8" r="2"/><circle cx="12" cy="11.5" r="2"/><circle cx="8.5" cy="8" r="2"/><path d="M12 13.5V22M12 18c-2 0-4-1-4-3"/>',
+  '/industries/self-storage/': '<path d="M3 21V8l9-5 9 5v13"/><path d="M7 21v-9h10v9M7 15h10M7 18h10"/>',
+  '/industries/locksmiths/': '<circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2M17 6l3 3M14 9l2 2"/>',
+}).map(([k, d]) => [k, SVG(d)]));
+{ const seen = new Map(); for (const [k, v] of Object.entries(NAVICON)) { if (seen.has(v)) throw new Error(`${k} and ${seen.get(v)} share a header icon`); seen.set(v, k); } }
 
 // Header IA: the same pillar hierarchy as before (every hub and every child page is linked
 // from the header), set in the welcome page's bar. The bar has room for seven labels, so
@@ -601,13 +670,14 @@ const HEADERGROUPS = () => [
 // The panel's closing "all" link to the pillar hub (Product's hub is How it works, already its first item;
 // Resources lists each of its three hubs at the top of its own group).
 const ALLLABEL = { Industries: 'All industries', Solutions: 'All solutions', Tracking: 'All tracking' };
-const flItem = (href, title, ic) => `<a class="wl-fl" href="${href}">${ic ? `<span class="wl-fl-i">${ICON[ic]}</span>` : ''}<span>${title}</span></a>`;
+const flItem = (href, title) => { const ic = NAVICON[href]; if (!ic) throw new Error(`header item ${href} has no icon (build.mjs NAVICON)`);
+  return `<a class="wl-fl" href="${href}"><span class="wl-fl-i">${ic}</span><span>${title}</span></a>`; };
 const NAV = (cur) => { const G = HEADERGROUPS(); return `<header class="wl-nav">
   ${BRAND()}
   <nav class="wl-links" aria-label="Site">${G.map(([label, href, groups, cls], gi) => groups
     ? `<div class="wl-drop-wrap"><a class="wl-drop-btn" href="${href}">${label}</a><button type="button" class="wl-drop-btn wl-drop-tog" aria-expanded="false" aria-haspopup="true" aria-label="${label} pages"><i class="wl-caret" aria-hidden="true"></i></button>`
       + `<div class="wl-drop${cls ? ' ' + cls : ''}"><div class="wl-drop-grid">`
-      + groups.map(([h, ic, items]) => (h ? `<b class="wl-drop-h">${h}</b>` : '') + items.map(([u, t]) => flItem(u, t, ic)).join('')).join('')
+      + groups.map(([h, ic, items]) => (h ? `<b class="wl-drop-h">${h}</b>` : '') + items.map(([u, t]) => flItem(u, t)).join('')).join('')
       + `</div>${ALLLABEL[label] ? `<a class="wl-drop-all" href="${href}">${ALLLABEL[label]} →</a>` : ''}</div></div>`
     : `<a href="${href}"${href === cur ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</nav>
   <div class="wl-acts"><a class="wl-link" href="${APP}/login">Sign in</a><a class="wl-btn" href="${APP}/signup">Get started</a>
@@ -904,7 +974,7 @@ PAGES.push(...CITYPAGES);
 
 // Hub landing lists every child in its cluster as a card grid.
 const HUBICON = { '/industries/': 'pin', '/solutions/': 'members', '/tracking/': 'target', '/learn/': 'guide' };
-const hubGrid = (hub) => `<section class="wl-sec">${D.excl((HUBSETS[hub] || []).map(([h, t]) => ({ href: h, title: t })), { iconName: HUBICON[hub] || 'pin' })}</section>`;
+const hubGrid = (hub) => `<section class="wl-sec">${D.excl((HUBSETS[hub] || []).map(([h, t]) => ({ href: h, title: t, svg: NAVICON[RM(h)] && NAVICON[RM(h)].replace('<svg ', '<svg class="ic" ').replace(/ width="15" height="15"/, '') })), { iconName: HUBICON[hub] || 'pin' })}</section>`;
 // Two-way breadcrumb: every nested leaf links back up to its hub and home.
 const HUBLABEL = { industries: 'Industries', solutions: 'Solutions', tracking: 'Tracking', learn: 'Learn', compare: 'Compare', 'free-tools': 'Free tools' };
 const CRUMBHUBS = new Set(['/compare/', '/free-tools/']);
@@ -986,8 +1056,12 @@ const OBJBYSLUG = {
   '/compare/eagle-eye-vs-localviking/': 'scales-shield', '/compare/eagle-eye-vs-gridmybusiness/': 'scales-grid',
   '/free-tools/': 'toolbox', '/free-tools/geo-grid-checker/': 'magnifier', '/free-tools/scan-cost-calculator/': 'calculator',
 };
+// STORIES: the pinned, letterboxed 3D scroll story on every page but home. Off: the inner pages open
+// with the plain hero (crumb, title, lede, call) and go straight into their copy — the reading comes
+// first. The models, world.js and the story code stay in the repo; set true to bring the story back.
+const STORIES = false;
 const OBJFOR = (p) => {
-  if (p.home) return null;
+  if (p.home || !STORIES) return null;
   if (OBJBYSLUG[p.slug]) return OBJBYSLUG[p.slug];
   let m = p.slug.match(/^\/industries\/([^/]+)\/([^/]+)\/$/);
   if (m) return `city-${m[1]}-${m[2]}`;
@@ -1200,8 +1274,10 @@ for (const f of ['dashboard.css', 'site.css', 'site.js', 'wl-obj.js', 'world.js'
   }
 }
 // The hero objects (Blender, tools/blender/make_objects.py), and three.js for their worlds.
-await cp(join(ROOT, 'src/app/obj'), join(DIST, 'app', 'obj'), { recursive: true });
-await cp(join(ROOT, 'src/app/vendor/three'), join(DIST, 'app', 'vendor', 'three'), { recursive: true });
+if (STORIES) {
+  await cp(join(ROOT, 'src/app/obj'), join(DIST, 'app', 'obj'), { recursive: true });
+  await cp(join(ROOT, 'src/app/vendor/three'), join(DIST, 'app', 'vendor', 'three'), { recursive: true });
+}
 
 let count = 0;
 for (const p of PAGES) {

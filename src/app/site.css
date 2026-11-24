@@ -32,7 +32,9 @@
 .wl-site .wl-drop.sm .wl-drop-grid { grid-template-columns:1fr; }
 .wl-site .wl-drop.wide { width:680px; }
 .wl-site .wl-drop.wide .wl-drop-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); }
-.wl-site .wl-drop.wide .wl-fl { padding:7px 12px; font-size:13.5px; }
+.wl-site .wl-drop.wide .wl-fl { padding:6px 10px; gap:10px; font-size:13.5px; }
+.wl-site .wl-drop.wide .wl-fl-i { width:26px; height:26px; border-radius:8px; }
+.wl-site .wl-fl-i svg { width:16px; height:16px; }
 .wl-site .wl-drop .wl-links-h, .wl-site .wl-drop-h { grid-column:1 / -1; padding:10px 12px 4px; font:600 11px var(--mono, monospace);
   letter-spacing:.12em; text-transform:uppercase; color:var(--w-ink-3); }
 .wl-site .wl-drop a::after { display:none; }
@@ -357,3 +359,17 @@
 @media (max-width: 760px) { .wl-site .wl-xp-cap .wl-xp-t { font-size:1.7rem; margin:10px 0 8px; } }
 @media (max-width: 1100px) and (orientation: portrait) { .wl-site .wl-xp-cap .wl-xp-t { font-size:clamp(1.7rem, 5vw, 2.6rem); } }
 @media (max-height: 560px) and (orientation: landscape) { .wl-site .wl-xp-cap .wl-xp-t { font-size:1.35rem; margin:8px 0 6px; } }
+
+/* Story length on touch screens. On a desktop wheel 500vh (story pages) and 1100vh (home) read as a
+   slow film; on a phone a thumb flick covers a screen or more, so the same length is a long grind
+   before the page starts. The stories time themselves from the section's own height (offsetHeight),
+   so shortening it only speeds the timeline up. svh: the small viewport, so the length does not
+   grow when the address bar hides. */
+@media (max-width: 760px), (max-height: 560px) and (orientation: landscape) {
+  .wl-site .fx { height:300vh; height:300svh; }
+  .wl-site .wl-xp { height:600vh; height:600svh; }
+}
+@media (min-width: 761px) and (max-width: 1100px) and (min-height: 561px) and (pointer: coarse) {
+  .wl-site .fx { height:380vh; height:380svh; }
+  .wl-site .wl-xp { height:800vh; height:800svh; }
+}
