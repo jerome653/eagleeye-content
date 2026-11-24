@@ -8,6 +8,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import * as D from './design.mjs';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const CAP = join(ROOT, 'audit/capture');
@@ -19,84 +20,27 @@ const OGIMG = ORIGIN + '/app/og-eagleeye.png';
 // Asset cache-bust: GitHub Pages serves /app/*.css with max-age=600, so a CSS fix can
 // show stale on an edge for up to 10 min. Version the stylesheet URL off the pages.css
 // content hash — a change mints a new URL the CDN has never cached, so the fix is instant.
-const ASSETVER = createHash('sha1').update(readFileSync(join(ROOT, 'src/app/pages.css'))).digest('hex').slice(0, 10);
+const ASSETVER = createHash('sha1').update(['dashboard.css', 'site.css', 'site.js', 'wl-bg.js', 'wl-obj.js', 'world.js']
+  .map((n) => readFileSync(join(ROOT, 'src/app', n), 'utf8')).join('\n')).digest('hex').slice(0, 10);
 
 const readFrag = async (f) => existsSync(join(FRG, f)) ? await readFile(join(FRG, f), 'utf8') : '';
 // Fragments are optional: this build renders plain, self-contained document pages from
 // content.mjs + faqs.mjs + the page map alone, so it runs with no captured SPA fragments.
 const shell = existsSync(join(FRG, '_shell.json')) ? JSON.parse(readFileSync(join(FRG, '_shell.json'), 'utf8')) : {};
 
-// PLAIN document stylesheet (Jerome 2026-11-23: "plain content like word"). Inlined per page
-// so every page is fully self-contained — no external CSS/JS/font, nothing to break on Pages.
-// Readable single-column document: clean headings, body prose, lists, simple tables. The old
-// wl-* app classes stay in the markup and are styled plainly here; decorative blocks are hidden.
-const PLAINCSS = `
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:#fff;color:#1b1b1b;font:400 18px/1.7 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-.wl{max-width:820px;margin:0 auto;padding:0 24px}
-a{color:#0b5fb0;text-decoration:underline;text-underline-offset:2px}
-a:hover{color:#063e74}
-/* header */
-.wl-nav{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:20px 0 14px;border-bottom:1px solid #e3e3e3;margin-bottom:8px}
-.wl-brand{font-weight:700;font-size:19px;letter-spacing:.02em;text-decoration:none;color:#1b1b1b}
-.wl-brand .mark-2{color:#0b8057}
-.wl-links{display:flex;flex-wrap:wrap;gap:6px 16px}
-.wl-links a,.wl-acts a{font-size:15px}
-.wl-acts{margin-left:auto;display:flex;gap:14px;align-items:center}
-.wl-menu-btn,.wl-menu,.wl-maps,.wl-hero-media,.wl-visual,.wl-map,.wl-grid,.wl-cell,.wl-readout,.wl-live,.wl-plus,.wl-squah{display:none!important}
-/* hero */
-main{display:block}
-.wl-hero{padding:26px 0 6px}
-h1{font-size:34px;line-height:1.2;font-weight:700;margin:.2em 0 .35em}
-.wl-line{display:block}
-.wl-lede{font-size:20px;line-height:1.55;color:#333;margin:.4em 0 1em}
-.wl-ctas{margin:14px 0}
-.wl-btn,.wl-btn.big{display:inline-block;background:#0b8057;color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:600;font-size:16px;margin-right:10px}
-.wl-btn.ghost{background:#fff;color:#0b8057;border:1px solid #0b8057}
-.wl-note{font-size:14px;color:#666}
-/* body sections */
-.wl-body{padding:6px 0 10px}
-.wl-sec{padding:18px 0;border-top:1px solid #ececec}
-.wl-sec:first-child{border-top:0}
-.wl-prose,.wl-head{max-width:none}
-h2{font-size:25px;line-height:1.25;font-weight:700;margin:1.1em 0 .4em}
-h3{font-size:20px;font-weight:700;margin:1.2em 0 .3em}
-p{margin:.6em 0}
-ul,ol{margin:.6em 0;padding-left:1.3em}
-li{margin:.3em 0}
-b,strong{font-weight:700}
-.wl-k{font-weight:600;color:#0b8057}
-/* numbers */
-.wl-nums{display:block;margin:.4em 0}
-.wl-numcard{padding:10px 0;border-top:1px dotted #ddd}
-.wl-numcard b{font-size:17px}
-.wl-numname{color:#555;font-style:italic;margin-left:8px}
-/* faq */
-.wl-faq .wl-q{border-bottom:1px solid #eaeaea;padding:8px 0}
-.wl-q summary{cursor:pointer;font-weight:600;font-size:17px;list-style:none}
-.wl-q summary::-webkit-details-marker{display:none}
-.wl-q[open] summary{margin-bottom:6px}
-.wl-q p{color:#333}
-/* related */
-.wl-related-list{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px}
-.wl-related-list a{font-size:15px}
-/* cta band */
-.wl-cta{background:#f3f7f5;border:1px solid #d9e6e0;border-radius:8px;padding:20px 22px;margin:16px 0}
-.wl-cta h2{margin-top:0}
-/* tables */
-table{border-collapse:collapse;width:100%;margin:1em 0;font-size:16px}
-th,td{border:1px solid #d7d7d7;padding:8px 10px;text-align:left}
-th{background:#f4f4f4}
-/* footer */
-.wl-foot{border-top:1px solid #e3e3e3;margin-top:24px;padding:22px 0 40px;display:flex;flex-wrap:wrap;gap:18px 40px;font-size:14px}
-.wl-foot-col{display:flex;flex-direction:column;gap:4px}
-.wl-foot-col b{color:#1b1b1b;margin-bottom:4px}
-.wl-foot-col a{color:#555;font-size:13.5px}
-.wl-foot-brand{flex:1 1 200px}
-.wl-copy{flex-basis:100%;color:#888;border-top:1px solid #eee;padding-top:12px;margin-top:6px}
-@media(max-width:600px){h1{font-size:28px}.wl-lede{font-size:18px}.wl{padding:0 18px}}
-`;
+// DESIGN (Jerome 2026-11-24): the app's own welcome-page design, from the Eagle Eye app
+// repo (eagleeyes/ui/app — reference only, never edited from here). dashboard.css is copied
+// verbatim into src/app and carries the whole look; src/app/site.css styles only the pieces
+// these content pages have that the welcome page does not; src/app/site.js is the welcome
+// page's behaviour (bar, dropdowns, glow, reveal); src/app/wl-bg.js is its city backdrop.
+// Content, URLs and per-page SEO are unchanged.
+const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">`;
+const ASSETS_HEAD = () => `${FONTS}
+<link rel="stylesheet" href="/app/dashboard.css?v=${ASSETVER}">
+<link rel="stylesheet" href="/app/site.css?v=${ASSETVER}">
+<script src="/app/wl-bg.js?v=${ASSETVER}" defer></script>
+<script src="/app/site.js?v=${ASSETVER}" defer></script>`;
 
 // ---- the page map: slug -> { title, desc, h1, lede, sections[], intro?, extraFaq? } ----
 // title <=60, desc <=155. lede = page H1 subhead. intro = enrichment paragraph(s) (true).
@@ -109,6 +53,8 @@ const NAVSET = [
   ['/apple-maps-rank-tracking/', 'Apple Maps'],
   ['/pricing/', 'Pricing'],
   ['/faq/', 'FAQ'],
+  ['/compare/', 'Compare'],
+  ['/free-tools/', 'Free tools'],
 ];
 // Primary top nav: lean brand-shaped set (mirrors the live welcome's 5-item nav — brand design),
 // so .wl-links fits one row without overlap. Full NAVSET stays in the mobile menu + footer.
@@ -173,6 +119,39 @@ const VERTICALS = [
 ];
 const ALLSET = [...NAVSET, ...SOLUTIONS, ...LEARN, ...TRACKING, ...VERTICALS];
 
+// ---- pillar->cluster hierarchy ----
+// Flat top-level slugs are nested under four hubs: /industries/, /solutions/, /tracking/, /learn/.
+// REMAP is old-slug -> new-slug. CONTENT/FAQS stay keyed by the ORIGINAL slug (p.ckey); every
+// other use of p.slug (canonical, OG, sitemap, file path, page-relative links) takes the NEW slug.
+// Old flat URLs get a redirect stub written at build time so nothing 404s. Product/root pages
+// (home, how-it-works, features, the-numbers, exclusive-data, google/apple-maps, pricing, faq)
+// stay at the root as the money/keyword pages.
+const REMAP = {
+  '/for-agencies/': '/solutions/agencies/',
+  '/multi-location-rank-tracking/': '/solutions/multi-location/',
+  '/local-pack-tracking/': '/tracking/local-pack/',
+  '/google-business-profile-rank-tracking/': '/tracking/google-business-profile/',
+  '/near-me-rank-tracking/': '/tracking/near-me/',
+  '/competitor-rank-tracking/': '/tracking/competitor/',
+  '/time-lapse-rank-tracking/': '/tracking/time-lapse/',
+  '/rank-tracking-for-google-and-apple-maps/': '/tracking/google-and-apple-maps/',
+  '/scheduled-rank-tracking/': '/tracking/scheduled/',
+  '/what-is-geo-grid-rank-tracking/': '/learn/what-is-geo-grid/',
+  '/geo-grid-vs-keyword-rank-tracking/': '/learn/geo-grid-vs-keyword/',
+  '/geo-grid-scan-sizes-explained/': '/learn/grid-sizes/',
+  '/share-of-local-voice/': '/learn/share-of-local-voice/',
+  '/local-seo-reporting-guide/': '/learn/reporting-guide/',
+  '/branded-reports/': '/learn/branded-reports/',
+  '/api/': '/learn/api/',
+  '/local-seo-glossary/': '/learn/glossary/',
+};
+for (const [h] of VERTICALS) REMAP[h] = '/industries/' + h.replace('/local-seo-for-', '');
+const RM = (s) => REMAP[s] || s;
+// Repoint the nav/footer arrays to the new URLs (PRIMARY_NAV + ALLSET share these element refs).
+for (const arr of [NAVSET, SOLUTIONS, LEARN, TRACKING, VERTICALS]) for (const e of arr) e[0] = RM(e[0]);
+// Which cluster each hub lists.
+const HUBSETS = { '/industries/': VERTICALS, '/solutions/': SOLUTIONS, '/tracking/': TRACKING, '/learn/': LEARN };
+
 // Enrichment copy (Phase 2) is authored per-page in content.mjs and merged here.
 let CONTENT = {};
 if (existsSync(join(ROOT, 'content.mjs'))) CONTENT = (await import('./content.mjs')).default;
@@ -181,6 +160,9 @@ let FAQS = {};
 if (existsSync(join(ROOT, 'faqs.mjs'))) FAQS = (await import('./faqs.mjs')).default;
 let caseStudyPages = () => [];
 if (existsSync(join(ROOT, 'casestudies.mjs'))) ({ caseStudyPages } = await import('./casestudies.mjs'));
+// Comparison ("vs") pages — grounded competitor content, authored in compare.mjs.
+let COMPARE = null;
+if (existsSync(join(ROOT, 'compare.mjs'))) COMPARE = (await import('./compare.mjs')).default;
 
 const PAGES = [
   { slug: '/', file: 'index.html',
@@ -585,27 +567,71 @@ const rewrite = (html) => stripRender(deRed(html))
   .replace(/href="#plans"/g, 'href="/pricing/"')
   .replace(/href="#faq"/g, 'href="/faq/"');
 
-// Faithful nav built from real wl-* classes, linking the full page set.
-const NAV = (cur) => `<header class="wl-nav" data-static="1">
-  <a class="wl-brand" href="/"><span class="mark-w"><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></a>
-  <nav class="wl-links" aria-label="Pages">${PRIMARY_NAV.map(([h, t]) => `<a href="${h}"${h === cur ? ' aria-current="page"' : ''}>${t}</a>`).join('')}</nav>
-  <div class="wl-acts"><a class="wl-link" href="${APP}/login">Sign in</a><a class="wl-btn" href="${APP}/signup">Get started</a>
-    <button type="button" class="wl-menu-btn" aria-label="Menu" aria-expanded="false" onclick="var n=this.closest('.wl-nav');var o=n.classList.toggle('open');this.setAttribute('aria-expanded',o)"><i></i><i></i></button></div>
-  <nav class="wl-menu" aria-label="Pages">${NAVSET.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}<a href="${APP}/login">Sign in</a></nav>
-</header>`;
+// The app's brand: the logo mark + the EAGLE EYE wordmark (wlHeader, dashboard.js).
+const BRAND = (tag = 'a') => `<${tag} class="wl-brand"${tag === 'a' ? ' href="/"' : ''}><img src="/app/logo.svg" alt="" width="30" height="30"><span class="mark-w"><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></${tag}>`;
 
-// Faithful footer with full product column.
+// Small line icons for the dropdown items (24-unit, stroked like the app's ICONS).
+const SVG = (d) => `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICON = {
+  product: SVG('<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'),
+  solutions: SVG('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M21.5 20a6.5 6.5 0 0 0-4-6"/>'),
+  tracking: SVG('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'),
+  learn: SVG('<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>'),
+  compare: SVG('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/>'),
+  tools: SVG('<rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M8.5 6.5h7"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01M8.5 18h.01M12 18h.01M15.5 18h.01"/>'),
+};
+
+// Header IA: the same pillar hierarchy as before (every hub and every child page is linked
+// from the header), set in the welcome page's bar. The bar has room for seven labels, so
+// Learn, Compare and Free tools share one "Resources" panel under their own headings.
+// [label, hub href, groups: [[heading|null, icon, items[[href, title]]]], panel class]
+const HEADERGROUPS = () => [
+  ['Product', '/how-it-works/', [[null, 'product', NAVSET.slice(0, 6)]], ''],
+  ['Industries', '/industries/', [[null, null, VERTICALS]], 'wide'],
+  ['Solutions', '/solutions/', [[null, 'solutions', SOLUTIONS]], 'sm'],
+  ['Tracking', '/tracking/', [[null, 'tracking', TRACKING]], ''],
+  ['Resources', '/learn/', [
+    ['Learn', 'learn', [['/learn/', 'All guides'], ...LEARN]],
+    ['Compare', 'compare', [['/compare/', 'All comparisons'], ...(COMPARE?.hub.items || []).map((it) => [it.slug, 'vs ' + it.name])]],
+    ['Free tools', 'tools', [['/free-tools/', 'All free tools'], ...(typeof FREETOOLS !== 'undefined' ? FREETOOLS : []).filter((p) => p.slug !== '/free-tools/').map((p) => [p.slug, p.h1])]],
+  ], 'r'],
+  ['Pricing', '/pricing/', null, ''],
+  ['FAQ', '/faq/', null, ''],
+];
+// The panel's closing "all" link to the pillar hub (Product's hub is How it works, already its first item;
+// Resources lists each of its three hubs at the top of its own group).
+const ALLLABEL = { Industries: 'All industries', Solutions: 'All solutions', Tracking: 'All tracking' };
+const flItem = (href, title, ic) => `<a class="wl-fl" href="${href}">${ic ? `<span class="wl-fl-i">${ICON[ic]}</span>` : ''}<span>${title}</span></a>`;
+const NAV = (cur) => { const G = HEADERGROUPS(); return `<header class="wl-nav">
+  ${BRAND()}
+  <nav class="wl-links" aria-label="Site">${G.map(([label, href, groups, cls], gi) => groups
+    ? `<div class="wl-drop-wrap"><a class="wl-drop-btn" href="${href}">${label}</a><button type="button" class="wl-drop-btn wl-drop-tog" aria-expanded="false" aria-haspopup="true" aria-label="${label} pages"><i class="wl-caret" aria-hidden="true"></i></button>`
+      + `<div class="wl-drop${cls ? ' ' + cls : ''}"><div class="wl-drop-grid">`
+      + groups.map(([h, ic, items]) => (h ? `<b class="wl-drop-h">${h}</b>` : '') + items.map(([u, t]) => flItem(u, t, ic)).join('')).join('')
+      + `</div>${ALLLABEL[label] ? `<a class="wl-drop-all" href="${href}">${ALLLABEL[label]} →</a>` : ''}</div></div>`
+    : `<a href="${href}"${href === cur ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</nav>
+  <div class="wl-acts"><a class="wl-link" href="${APP}/login">Sign in</a><a class="wl-btn" href="${APP}/signup">Get started</a>
+    <button type="button" class="wl-menu-btn" aria-label="Menu" aria-expanded="false"><i></i><i></i></button></div>
+  <nav class="wl-menu" aria-label="Site">${G.map(([label, href, groups]) => groups
+    ? `<details><summary>${label}<i class="wl-caret" aria-hidden="true"></i></summary>${ALLLABEL[label] ? `<a class="all" href="${href}">${ALLLABEL[label]} →</a>` : ""}`
+      + groups.map(([, , items]) => items.map(([u, t]) => `<a href="${u}">${t}</a>`).join('')).join('') + `</details>`
+    : `<a href="${href}">${label}</a>`).join('')}<a href="${APP}/login">Sign in</a></nav>
+</header>`; };
+
+// The welcome page's footer (brand + columns + copyright row), with the site's full link set.
 const FOOT = () => `<footer class="wl-foot">
-  <div class="wl-foot-brand"><div class="wl-brand"><span class="mark-w"><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></div>
-    <p>Geo-grid rank tracking for Google Maps and Apple Maps.</p></div>
+  <div class="wl-foot-brand">${BRAND('div')}
+    <p>Geo-grid rank tracking for Google Maps and Apple Maps — see where a business ranks street by street, and prove the lift to every client.</p>
+    <a class="wl-btn" href="${APP}/signup">Start with 10 free scans</a><small>No card needed. Your first scan of your own site is free.</small></div>
   <div class="wl-foot-col"><b>Product</b>${NAVSET.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-  <div class="wl-foot-col"><b>Solutions</b>${SOLUTIONS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-  <div class="wl-foot-col"><b>Tracking</b>${TRACKING.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-  <div class="wl-foot-col wl-foot-col-wide"><b>By industry</b>${VERTICALS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-  <div class="wl-foot-col"><b>Learn</b>${LEARN.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+  <div class="wl-foot-col"><b><a href="/solutions/">Solutions</a></b>${SOLUTIONS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+  <div class="wl-foot-col"><b><a href="/tracking/">Tracking</a></b>${TRACKING.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+  <div class="wl-foot-col"><b><a href="/learn/">Learn</a></b>${LEARN.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
   <div class="wl-foot-col"><b>Account</b><a href="${APP}/login">Sign in</a><a href="${APP}/signup">Create account</a></div>
-  <div class="wl-copy"><small>© ${new Date().getFullYear()} Eagle Eye</small><span class="wl-squah">Kind of service that makes you <b>SQUAHHH!</b></span></div>
+  <div class="wl-foot-wide"><b><a href="/industries/">By industry</a></b><div class="wl-foot-ind">${VERTICALS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div></div>
+  <div class="wl-copy"><small>© ${new Date().getFullYear()} Eagle Eye</small><span><a href="${APP}/login">Sign in</a> · <a href="${APP}/signup">Create account</a></span></div>
 </footer>`;
+
 
 const FINAL = () => rewrite(shell.final || '');
 
@@ -727,33 +753,287 @@ const gridCard = (slug) => {
   </div></div>`;
 };
 // The three numbers every scan folds the grid into — definitions, no fabricated values.
-const numbersSection = () => `<section class="wl-sec wl-numsec"><div class="wl-head"><h2>Three numbers, every scan</h2>
-  <div class="wl-head-r"><p class="wl-lede">The whole grid rolls up into the figures a client actually remembers — tracked every run so the trend is the proof.</p></div></div>
-  <div class="wl-nums">
-    <div class="wl-numcard"><b>LSOV</b><span class="wl-numname">Local Share of Voice</span><p>How much of the whole grid finds the business near the top — one number for the entire map.</p></div>
-    <div class="wl-numcard"><b>ARP</b><span class="wl-numname">Average Rank, found</span><p>The mean position across only the points that return the business at all.</p></div>
-    <div class="wl-numcard"><b>ATRP</b><span class="wl-numname">Average Total Rank</span><p>The same average, counting every point that missed the business entirely — the honest one.</p></div>
-  </div></section>`;
+const numbersSection = () => `<section class="wl-sec wl-numsec">${D.head('Three numbers, every scan',
+  'Three numbers a client remembers and a trend that proves your work paid off. Every scan rolls the whole grid into them — no spreadsheet, no hand-waving.')}`
+  + D.figs([
+    { tag: 'Local Share of Voice', value: 'LSOV', label: 'Local Share of Voice', more: 'How much of the whole grid finds the business near the top — one number for the entire map.', art: 'fa-grid' },
+    { tag: 'Average Rank, found', value: 'ARP', label: 'Average Rank, found', more: 'The mean position across only the points that return the business at all.', art: 'fa-list' },
+    { tag: 'Average Total Rank', value: 'ATRP', label: 'Average Total Rank', more: 'The same average, counting every point that missed the business entirely — the honest one.', art: 'fa-one' },
+  ], 'wl-figs-3') + `</section>`;
 // Closing conversion band (every page; home keeps its captured FINAL instead).
-const ctaBand = () => `<section class="wl-sec wl-ctasec"><div class="wl-cta">
-  <h2>Find out where you really rank</h2>
-  <p>Your first scan of your own site is free, at any grid size. No card needed.</p>
-  <div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a></div>
-</div></section>`;
+// Set as the welcome page's closing call (.wl-final): back over the city, after the body band.
+const ctaBand = () => `<section class="wl-final">
+  <h2>See the blocks you're winning — and the ones you're not</h2>
+  <p class="wl-lede">Run a real geo-grid scan on your own business, any size, no card. In minutes you'll see every block you own, every block a rival is taking, and the one number you can hand a client.</p>
+  <div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a><a class="wl-btn ghost big" href="${APP}/login">Sign in</a></div>
+</section>`;
 
+// ---- nest flat pages under hubs ----
+// Keep ckey (original slug) for CONTENT/FAQS lookup; move slug + file to the new nested URL.
+for (const p of PAGES) {
+  p.ckey = p.slug;
+  const nu = REMAP[p.slug];
+  if (nu) { p.slug = nu; p.file = nu.replace(/^\//, '') + 'index.html'; }
+}
+// Four pillar/hub landing pages. Opening copy grounded in competitor-IA research (2026-11-23):
+// Yext /industries model, GridMyBusiness features, BrightLocal "one pin tells you nothing",
+// Whitespark /guides — benefit-led, no invented stats.
+const HUBPAGES = [
+  { slug: '/industries/', file: 'industries/index.html', hub: '/industries/',
+    title: 'Local Rank Tracking by Industry — Eagle Eye',
+    desc: 'Pick your trade: see how Eagle Eye maps where that business ranks on Google and Apple Maps, block by block across the whole service area.',
+    h1: 'Local rank tracking for your industry',
+    lede: 'Local search behaves differently for every trade — the keywords, the service-area shape and the competitors all change. Pick your vertical and see where a business like yours wins the map and where it fades.',
+    sections: [] },
+  { slug: '/solutions/', file: 'solutions/index.html', hub: '/solutions/',
+    title: 'Solutions — Agencies & Multi-Location | Eagle Eye',
+    desc: 'Local rank tracking for agencies proving SEO to clients and brands watching every location — one account, one set of numbers, branded reports.',
+    h1: 'Built for how you work',
+    lede: 'One agency managing fifty clients, or one brand managing fifty locations — Eagle Eye turns scattered map rankings into one clear, shareable picture. Client workspaces, a grid per location, and branded reports that make progress obvious, without a spreadsheet.',
+    sections: [] },
+  { slug: '/tracking/', file: 'tracking/index.html', hub: '/tracking/',
+    title: 'Local Rank Tracking Types — Geo-Grid | Eagle Eye',
+    desc: 'Local pack, Business Profile, near-me, competitor, Google and Apple Maps tracking — one geo-grid scan measures them all, point by point, on a schedule.',
+    h1: 'Every way to track local rank',
+    lede: 'One pin tells you almost nothing. Eagle Eye checks hundreds of points across the service area, so you see where a business wins, where it fades, and who is taking the customers it can’t see — local pack, Google and Apple Maps, competitors and near-me, on a schedule.',
+    sections: [] },
+  { slug: '/learn/', file: 'learn/index.html', hub: '/learn/',
+    title: 'Learn Geo-Grid Local SEO — Guides | Eagle Eye',
+    desc: 'What geo-grid rank tracking is, how LSOV/ARP/ATRP work, grid sizes, reporting and branded PDFs — the guides behind every Eagle Eye scan.',
+    h1: 'Learn geo-grid local SEO',
+    lede: 'New to geo-grid tracking, or explaining it to a client? Plain-English guides to how the grid works, what size to choose, how share-of-local-voice and ARP/ATRP are calculated, and how to turn a colour-coded map into a plan.',
+    sections: [] },
+];
+for (const p of HUBPAGES) p.ckey = p.slug;
+PAGES.push(...HUBPAGES);
+
+// Comparison hub + vs-pages (compare.mjs). Each carries its grounded data on p.compare.
+if (COMPARE) {
+  const hubE = { slug: '/compare/', file: 'compare/index.html', comparehub: true, ckey: '/compare/',
+    title: COMPARE.hub.title, desc: COMPARE.hub.desc, h1: COMPARE.hub.h1, lede: COMPARE.hub.lede, sections: [] };
+  PAGES.push(hubE);
+  for (const cp of COMPARE.pages) {
+    PAGES.push({ slug: cp.slug, file: cp.slug.replace(/^\//, '') + 'index.html', compare: cp, ckey: cp.slug,
+      title: cp.title, desc: cp.desc, h1: cp.h1, lede: cp.lede, sections: [] });
+  }
+}
+
+// Free, no-account tools. The geo-grid checker routes to the app's real free-first-scan (no card);
+// the credit calculator is a genuine static client-side tool — 1 credit per grid point, no backend, no spend.
+const FREETOOLS = [
+  { slug: '/free-tools/', file: 'free-tools/index.html',
+    title: 'Free Local SEO Tools — Geo-Grid Check | Eagle Eye',
+    desc: 'Free, no-account tools: run your first geo-grid rank scan free, and work out exactly how many credits a scan costs before you sign up.',
+    h1: 'Free local rank tools',
+    lede: 'Start free, no card. Run a real geo-grid scan on your own business, or work out what a scan will cost — before you sign up.',
+    sections: [],
+    _intro: `<div class="wl-hubgrid">`
+      + `<a class="wl-hubcard wl-glow" href="/free-tools/geo-grid-checker/"><b>Free geo-grid check</b><span>Run your first scan on your own business — any grid size, no card.</span></a>`
+      + `<a class="wl-hubcard wl-glow" href="/free-tools/scan-cost-calculator/"><b>Scan credit calculator</b><span>See exactly how many credits a grid size and schedule costs — before you sign up.</span></a>`
+      + `</div>` },
+  { slug: '/free-tools/geo-grid-checker/', file: 'free-tools/geo-grid-checker/index.html',
+    title: 'Free Geo-Grid Rank Check — No Card | Eagle Eye',
+    desc: 'See where a business ranks across its whole area on Google and Apple Maps — free. Your first geo-grid scan is free at any size, no card needed.',
+    h1: 'Free geo-grid rank check',
+    lede: 'See where a business really ranks on the map — your first scan is free, at any grid size, no card.',
+    sections: [],
+    _intro: `<p>Eagle Eye lays a grid over the whole service area and runs a real Google and Apple Maps search from every point, then rolls it into one number you can act on. Your first scan of your own business is free at any grid size, and no card is needed to run it.</p>`
+      + `<p>What the free scan shows you: your rank at every grid point, your Local Share of Voice, and the competitor map for every rival that outranks you on the map.</p>` },
+  { slug: '/free-tools/scan-cost-calculator/', file: 'free-tools/scan-cost-calculator/index.html',
+    title: 'Scan Credit Calculator — Geo-Grid | Eagle Eye',
+    desc: 'Work out how many credits a geo-grid scan costs: pick a grid size and how often it runs. One credit per grid point, no account needed.',
+    h1: 'Scan credit calculator',
+    lede: 'One credit scans one grid point. Pick a grid and a schedule to see the credits — no account needed.',
+    sections: [],
+    _intro: `<p>A scan spends one credit per grid point, so the credits depend only on the grid size and how often it runs. Pick both to see the cost. For the dollar price, see <a href="/pricing/">the plans</a> — credits you buy never expire.</p>`
+      + `<div class="wl-tcalc wl-glow">`
+      + `<label>Grid size <select id="eeGrid">`
+      + `<option value="3">3 × 3 (9 points)</option><option value="5">5 × 5 (25 points)</option>`
+      + `<option value="7">7 × 7 (49 points)</option><option value="9" selected>9 × 9 (81 points)</option>`
+      + `<option value="11">11 × 11 (121 points)</option><option value="13">13 × 13 (169 points)</option>`
+      + `<option value="15">15 × 15 (225 points)</option><option value="21">21 × 21 (441 points)</option>`
+      + `</select></label>`
+      + `<label>How often <select id="eeFreq"><option value="1">Once</option><option value="4">Weekly (×4 / month)</option><option value="30">Daily (×30 / month)</option></select></label>`
+      + `<p class="wl-tcalc-out" id="eeOut"></p></div>`,
+    script: `<script>(function(){var g=document.getElementById('eeGrid'),f=document.getElementById('eeFreq'),o=document.getElementById('eeOut');function calc(){var n=+g.value,pts=n*n,mo=pts*(+f.value);o.textContent=pts+' credits per scan'+((+f.value>1)?' \\u00b7 '+mo+' credits per month':'')+' \\u2014 1 credit per grid point.';}g.onchange=f.onchange=calc;calc();})();</script>` },
+];
+for (const p of FREETOOLS) p.ckey = p.slug;
+PAGES.push(...FREETOOLS);
+
+// Programmatic {industry}-in-{metro} pages. Tight scope (Jerome 2026-11-23): top-10 US metros
+// x 5 flagship trades = 50 pages. Each page's copy is varied by BOTH the trade pain and a true
+// per-metro geography descriptor, so no two pages read as token-swapped duplicates.
+const METROS = [
+  ['new-york', 'New York', 'dense and walkable, where your rank can flip two avenues over and the pin radius is tight'],
+  ['los-angeles', 'Los Angeles', 'sprawling and car-first — a customer in Pasadena searches a different map than one in Santa Monica'],
+  ['chicago', 'Chicago', 'split neighborhood by neighborhood, where the Loop and the North Side are two separate search markets'],
+  ['houston', 'Houston', 'one of the largest, unzoned metro footprints in the country, where coverage gaps hide between suburbs'],
+  ['phoenix', 'Phoenix', 'a wide Sunbelt grid of suburbs, where ranking in Scottsdale tells you nothing about Mesa'],
+  ['philadelphia', 'Philadelphia', 'tight rowhouse neighborhoods where a few blocks separate the top of the pack from invisible'],
+  ['san-antonio', 'San Antonio', 'spread across a large, fast-growing footprint where the loop highways carve up the market'],
+  ['san-diego', 'San Diego', 'strung along the coast and inland valleys — North County and downtown are separate map battles'],
+  ['dallas', 'Dallas', 'a sprawling metroplex where Fort Worth, Plano and the core each rank on their own'],
+  ['austin', 'Austin', 'growing fast and spreading outward, where the suburbs are catching up to downtown demand'],
+];
+const FLAGSHIP = [
+  ['plumbers', 'Plumbers', 'an emergency call goes to whoever shows up first on the map'],
+  ['hvac', 'HVAC companies', 'in peak season the top three pins take the calls and the rest wait'],
+  ['roofers', 'Roofers', 'after a storm the business goes to whoever ranks where the damage is'],
+  ['electricians', 'Electricians', 'homeowners pick from the map pack, not from page two'],
+  ['med-spas', 'Med spas', 'clients book the closest highly-rated name they see on the map'],
+];
+const CITYCHILDREN = {};
+const CITYPAGES = [];
+for (const [ik, ilabel, pain] of FLAGSHIP) {
+  const parent = '/industries/' + ik + '/';
+  CITYCHILDREN[parent] = [];
+  for (const [ck, city, geo] of METROS) {
+    const slug = parent + ck + '/';
+    CITYCHILDREN[parent].push([slug, city]);
+    CITYPAGES.push({
+      slug, file: slug.replace(/^\//, '') + 'index.html', ckey: slug, sections: [], crumbLeaf: city,
+      title: `${ilabel} Local SEO in ${city} | Eagle Eye`,
+      desc: `See where ${ilabel.toLowerCase()} rank across ${city} on the Google and Apple map — a geo-grid scan of the whole metro, first scan free, no card.`,
+      h1: `${ilabel} local rank tracking in ${city}`,
+      lede: `For ${ilabel.toLowerCase()} in ${city}, ${pain}. Eagle Eye grids the whole metro on Google and Apple Maps and shows exactly where you own the pin — and where a rival takes it.`,
+      _intro: `<p>${city} is ${geo}. A single rank for "${ilabel.toLowerCase()} near me" hides that completely — you can sit first downtown and be nowhere three neighborhoods out, which is where half the calls come from. Eagle Eye lays a grid across the whole ${city} market and runs a real search from every point, so you see the map the way your customers actually do.</p>`
+        + `<p>Every scan rolls ${city} into three numbers — your Local Share of Voice, average rank and the share of points where you crack the top three — plus a competitor map naming whoever outranks you at each pin. Run your first ${city} scan free, at any grid size, with no card.</p>` });
+  }
+}
+PAGES.push(...CITYPAGES);
+
+// Hub landing lists every child in its cluster as a card grid.
+const HUBICON = { '/industries/': 'pin', '/solutions/': 'members', '/tracking/': 'target', '/learn/': 'guide' };
+const hubGrid = (hub) => `<section class="wl-sec">${D.excl((HUBSETS[hub] || []).map(([h, t]) => ({ href: h, title: t })), { iconName: HUBICON[hub] || 'pin' })}</section>`;
+// Two-way breadcrumb: every nested leaf links back up to its hub and home.
+const HUBLABEL = { industries: 'Industries', solutions: 'Solutions', tracking: 'Tracking', learn: 'Learn', compare: 'Compare', 'free-tools': 'Free tools' };
+const CRUMBHUBS = new Set(['/compare/', '/free-tools/']);
+const LABELBYSLUG = {};
+for (const set of Object.values(HUBSETS)) for (const [h, t] of set) LABELBYSLUG[h] = t;
+const CRUMB = (p) => {
+  const segs = p.slug.split('/').filter(Boolean);
+  if (segs.length < 2) return '';
+  const hub = '/' + segs[0] + '/';
+  if (!HUBSETS[hub] && !CRUMBHUBS.has(hub)) return '';
+  const parts = [`<a href="/">Home</a>`, `<a href="${hub}">${HUBLABEL[segs[0]] || segs[0]}</a>`];
+  if (segs.length >= 3) {
+    const mid = '/' + segs[0] + '/' + segs[1] + '/';
+    parts.push(`<a href="${mid}">${LABELBYSLUG[mid] || segs[1]}</a>`);
+  }
+  parts.push(`<span>${p.crumbLeaf || p.h1}</span>`);
+  return `<nav class="wl-crumb" aria-label="Breadcrumb">` + parts.join(' <span>›</span> ') + `</nav>`;
+};
+// Metro grid shown on a flagship-trade industry page, linking its {trade}-in-{metro} children.
+const cityGrid = (kids) => `<section class="wl-sec">${D.head('By metro', '')}${D.excl(kids.map(([h, t]) => ({ href: h, title: t })), { iconName: 'pin' })}</section>`;
+// Comparison hub card grid (with per-competitor blurb) and vs-page body (table + prose).
+const compareHubGrid = () => `<section class="wl-sec">${D.excl((COMPARE?.hub.items || []).map(it => ({ href: it.slug, title: 'vs ' + it.name, desc: it.blurb, more: 'Compare' })), { iconName: 'reports' })}</section>`;
+const compareBody = (cp) => {
+  const table = `<section class="wl-sec"><div class="wl-cmp-wrap wl-glow"><table class="wl-cmp">`
+    + `<thead><tr><th></th><th>Eagle Eye</th><th>${cp.competitor}</th></tr></thead><tbody>`
+    + cp.table.map(([d, a, b]) => `<tr><th>${d}</th><td>${a}</td><td>${b}</td></tr>`).join('')
+    + `</tbody></table><p class="wl-cmp-note">${cp.competitor} details as published on their own site, November 2026 — check their current plan before quoting.</p></div></section>`;
+  const secs = (cp.sections || []).map(s =>
+    `<section class="wl-sec"><div class="wl-prose"><h2>${s.h}</h2>${s.html}</div></section>`).join('');
+  return table + secs;
+};
+
+// Home enrichment: benefit-led depth between the hero and the numbers. Every claim traces to a
+// capability already asserted on a cluster page; cards link down into the hierarchy. The hero,
+// intro, numbers, FAQ and final CTA that James approved are untouched — this only adds between.
+const HOMEEXTRA = () => [
+  `<section class="wl-sec wl-how">${D.eyebrow('How it works')}${D.head('From invisible to undeniable, in three moves',
+    'Local SEO is abstract until a client sees it on a map. Eagle Eye makes the whole job visible — the gap, the lift, and the win — so the work sells itself.')}`
+  + D.steps([
+    { stage: 'Find the gap', art: 'heat', href: '/how-it-works/', more: 'How it works', text: 'One scan shows every block where a business is invisible — and who is taking those customers instead.' },
+    { stage: 'Prove the lift', art: 'proof', href: '/tracking/scheduled/', more: 'Scheduled scans', text: 'Put the scan on a schedule and watch Local Share of Voice climb, run after run.' },
+    { stage: 'Report the win', art: 'report', href: '/learn/branded-reports/', more: 'Branded reports', text: 'Hand over a branded PDF with your name on it and the map that proves the result.' },
+  ]) + `</section>`,
+  D.showcase('Everything one scan gives you', [
+    { title: 'Rank at every point', href: '/features/', art: 'grid', desc: 'A real Google and Apple Maps search from up to 441 points across the whole area.' },
+    { title: 'LSOV, ARP &amp; ATRP', href: '/the-numbers/', art: 'gauge', desc: 'Three numbers that turn a grid of pins into an answer a client remembers.' },
+    { title: 'Competitor map', href: '/tracking/competitor/', art: 'comp', desc: 'Every rival that outranks you, named point by point across the grid.' },
+    { title: 'Scheduled scans', href: '/tracking/scheduled/', art: 'cal', desc: 'Set a rhythm and the trend builds itself — nobody has to remember to run it.' },
+    { title: 'Branded reports', href: '/learn/branded-reports/', art: 'pdf', desc: 'White-label PDF and CSV with your logo, ready to send.' },
+    { title: 'Google + Apple', href: '/tracking/google-and-apple-maps/', art: 'maps', desc: 'Both maps, same grid, same price — the Apple surface most tools ignore.' },
+  ]),
+  `<section class="wl-sec"><div class="wl-prose"><h2>Data a rank checker never shows you</h2>`
+  + `<p>Every rival's map, open-or-closed point by point, review counts moving between scans, the full top 20 everywhere — up to 8,820 listings from a single 21 × 21 scan. <a href="/data-never-on-the-market/">See the six things only a geo-grid records →</a></p></div></section>`,
+  `<section class="wl-sec">${D.eyebrow('Who it is for')}${D.head('Built for the people who have to prove it', '')}`
+  + D.wins([
+    { icon: 'members', title: 'Agencies', href: '/solutions/agencies/', desc: 'Show every client where they rank — and exactly what your work moved.' },
+    { icon: 'pin', title: 'Multi-location brands', href: '/solutions/multi-location/', desc: 'One grid per location, every market on the same dashboard.' },
+    { icon: 'org', title: '28 local industries', href: '/industries/', desc: 'From plumbers to med spas — the map pack is where the calls start.' },
+  ]) + `</section>`,
+  `<section class="wl-sec"><div class="wl-prose"><h2>Why teams move to Eagle Eye</h2>`
+  + `<p>Most geo-grid tools stop at Google and reset your credits every month. Eagle Eye grids <b>Google and Apple at the same price</b>, your <b>credits never expire</b>, and your <b>first scan is free</b> — no card. See it next to the tool you run now.</p>`
+  + `<p><a class="wl-btn" href="/compare/">Compare Eagle Eye to Local Falcon, BrightLocal &amp; more →</a></p></div></section>`,
+];
+// The eyebrow over a page's prose sections: its pillar, or nothing on a top-level page.
+// One Blender model per page, no two pages alike (tools/blender/make_objects.py OBJECTS): a trade's
+// shop carries that trade's emblem, a trade-in-metro page adds the metro's landmark, every other
+// page has its own. The build stops if two pages would share a model.
+const OBJBYSLUG = {
+  '/how-it-works/': 'stairs', '/features/': 'featureset', '/the-numbers/': 'gauge', '/data-never-on-the-market/': 'vault',
+  '/apple-maps-rank-tracking/': 'maptile-apple', '/google-maps-rank-tracking/': 'maptile-google', '/pricing/': 'coins', '/faq/': 'bubble',
+  '/solutions/': 'signpost', '/solutions/agencies/': 'agency', '/solutions/multi-location/': 'multiloc',
+  '/tracking/': 'radar', '/tracking/local-pack/': 'localpack', '/tracking/google-business-profile/': 'profilecard', '/tracking/near-me/': 'phone',
+  '/tracking/competitor/': 'podium', '/tracking/scheduled/': 'calendar', '/tracking/time-lapse/': 'film', '/tracking/google-and-apple-maps/': 'twomaps',
+  '/learn/': 'book', '/learn/glossary/': 'glossary', '/learn/what-is-geo-grid/': 'scangrid', '/learn/grid-sizes/': 'gridsizes',
+  '/learn/geo-grid-vs-keyword/': 'pinvsgrid', '/learn/share-of-local-voice/': 'pie', '/learn/branded-reports/': 'report',
+  '/learn/reporting-guide/': 'clipboard', '/learn/api/': 'api',
+  '/industries/': 'storefront',
+  '/compare/': 'scales', '/compare/eagle-eye-vs-brightlocal/': 'scales-stack', '/compare/eagle-eye-vs-whitespark/': 'scales-tile',
+  '/compare/eagle-eye-vs-localviking/': 'scales-shield', '/compare/eagle-eye-vs-gridmybusiness/': 'scales-grid',
+  '/free-tools/': 'toolbox', '/free-tools/geo-grid-checker/': 'magnifier', '/free-tools/scan-cost-calculator/': 'calculator',
+};
+const OBJFOR = (p) => {
+  if (p.home) return null;
+  if (OBJBYSLUG[p.slug]) return OBJBYSLUG[p.slug];
+  let m = p.slug.match(/^\/industries\/([^/]+)\/([^/]+)\/$/);
+  if (m) return `city-${m[1]}-${m[2]}`;
+  m = p.slug.match(/^\/industries\/([^/]+)\/$/) || p.slug.match(/^\/local-seo-for-([^/]+)\/$/);
+  if (m) return `shop-${m[1]}`;
+  throw new Error(`${p.slug}: no hero model assigned (build.mjs OBJBYSLUG)`);
+};
+const OBJSEEN = new Map();
+// How each of the four stages of a page's object arrives in its story (the shader's effects:
+// 0 dropped in, 1 risen up, 2 scaled up, 3 spun in, 4 swept in sideways, 6 radial reveal),
+// varied by page so no two neighbouring pages build the same way.
+const FXSETS = ['6,2,3,0', '2,0,3,4', '6,1,2,3', '4,3,0,2', '2,3,1,0', '6,4,2,1'];
+// the import map's URLs are page-relative (the site is served under a sub-path on Pages)
+const IMPORTBASE = (p) => p.slug === '/' ? './' : '../'.repeat(p.slug.split('/').filter(Boolean).length);
+const SEEDOF = (p) => [...p.slug].reduce((a, ch) => (a * 33 + ch.charCodeAt(0)) >>> 0, 5381) % 997;
+const FXFOR = (p) => FXSETS[[...p.slug].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % FXSETS.length];
+const PROSELABEL = (p) => { const seg = p.slug.split('/').filter(Boolean)[0]; return HUBLABEL[seg] && p.slug !== '/' + seg + '/' ? HUBLABEL[seg] : ''; };
 const PAGE = async (p) => {
-  const c = { ...(CONTENT[p.slug] || {}) };
-  if (!c.faq && FAQS[p.slug]) c.faq = FAQS[p.slug];
+  const c = { ...(CONTENT[p.ckey] || {}) };
+  if (!c.faq && FAQS[p.ckey]) c.faq = FAQS[p.ckey];
   const bodySecs = [];
+  if (p.home) bodySecs.push(D.demo(APP));
+  if (p.hub) bodySecs.push(hubGrid(p.hub));
+  if (p.comparehub) bodySecs.push(compareHubGrid());
+  if (p.compare) { if (p.compare.faq) c.faq = p.compare.faq; bodySecs.push(compareBody(p.compare)); }
   if (p._intro) bodySecs.push(`<section class="wl-sec"><div class="wl-prose">${p._intro}</div></section>`);
+  if (CITYCHILDREN[p.slug]) bodySecs.push(cityGrid(CITYCHILDREN[p.slug]));
   if (c.introHtml) bodySecs.push(c.introHtml);
-  for (const s of p.sections) bodySecs.push(rewrite(await readFrag(`sec-${s}.html`)));
+  if (p.home) for (const s of HOMEEXTRA()) bodySecs.push(s);
+  for (const s of p.sections) bodySecs.push(D.WELCOME_SECTIONS[s] ? D.WELCOME_SECTIONS[s](PLANS) : rewrite(await readFrag(`sec-${s}.html`)));
   if (c.afterHtml) bodySecs.push(c.afterHtml);
   // Numbers reinforcement on every page except the one that already is the numbers page.
   if (p.slug !== '/the-numbers/') bodySecs.push(numbersSection());
   if (c.faq) bodySecs.push(faqSection(c.faq));
-  if (!p.home) bodySecs.push(ctaBand());
+  // (the closing call is set after the body band, as .wl-final — see the template)
   const ld = jsonLd(p, c);
+  const obj = OBJFOR(p);
+  if (obj) { if (OBJSEEN.has(obj)) throw new Error(`${p.slug} and ${OBJSEEN.get(obj)} would share the model ${obj}`); OBJSEEN.set(obj, p.slug); }
+  if (obj && !existsSync(join(ROOT, 'src/app/obj', obj + '.eeq'))) throw new Error(`hero object ${obj}.eeq missing — run tools/blender/make_objects.py`);
+  // The scroll story's chapters, from this page's own copy (design.mjs chaptersFrom).
+  // A hub's story walks through its first child pages, each with that page's own lede.
+  const kids = p.hub ? (HUBSETS[p.hub] || []).map(([h, t]) => { const q = PAGES.find(x => x.slug === RM(h) || x.ckey === h); return [t, q ? q.lede : '']; })
+    : p.slug === '/free-tools/' ? FREETOOLS.filter(x => x.slug !== '/free-tools/').map(x => [x.h1, x.lede]) : [];
+  const story = obj ? D.chaptersFrom(bodySecs.join('\n'), c.faq || [], kids) : null;
+  if (process.env.EE_DEBUG && p.slug === process.env.EE_DEBUG) console.log(bodySecs.join('\n').slice(0, 1200), story);
+  if (obj && story.length < 3) throw new Error(`${p.slug}: only ${story.length} chapters found for its story`);
   const head = `<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${p.title}</title>
@@ -766,33 +1046,60 @@ const PAGE = async (p) => {
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${p.title}">
 <meta name="twitter:description" content="${p.desc}"><meta name="twitter:image" content="${OGIMG}">
 <link rel="icon" href="/app/logo.svg" type="image/svg+xml">
-<style>${PLAINCSS}</style>
+${ASSETS_HEAD()}
+${obj ? `<script type="importmap">{"imports":{"three":"${IMPORTBASE(p)}app/vendor/three/three.module.js","three/addons/":"${IMPORTBASE(p)}app/vendor/three/addons/"}}</script>
+<link rel="preload" href="/app/obj/${obj}.eeq" as="fetch" type="application/octet-stream" crossorigin="anonymous">
+<script src="/app/wl-obj.js?v=${ASSETVER}" defer></script>` : ''}
 ${ld.map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join('\n')}
 </head><body>
-<div class="wl">
+<div class="wl wl-anim wl-site" data-app="${APP}"${p.home ? ' data-xp' : ''}>
 ${NAV(p.slug)}
 <main>
-<section class="wl-hero${p.home ? '' : ' wl-hero-sm'}">
+${story ? D.fxStory({ obj, label: PROSELABEL(p) || HUBLABEL[p.slug.split('/').filter(Boolean)[0]] || '', h1: p.h1, lede: p.lede, crumb: CRUMB(p), chapters: story, fx: FXFOR(p), seed: SEEDOF(p), v: ASSETVER,
+  ctas: `<div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a></div>` }) : `<section class="wl-hero${p.home ? '' : ' wl-hero-sub'}">
   <div class="wl-hero-copy">
+    ${p.home ? `<div class="wl-maps"><span class="on"><i></i>Google Maps</span><span class="on"><i></i>Apple Maps</span></div>` : CRUMB(p)}
     ${p.home
       ? `<h1><span class="wl-line">Every street has a #1.</span><span class="wl-line wl-line-hot">Make it you.</span></h1>`
-      : `<h1>${p.h1}</h1>`}
+      : `<h1><span class="wl-line">${p.h1}</span></h1>`}
     <p class="wl-lede">${p.lede}</p>
     ${p.home ? `<div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a><a class="wl-btn ghost big" href="${APP}/login">Sign in</a></div>
     <p class="wl-note">No card needed. Your first scan of your own website is free at any size.</p>` :
     `<div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a></div>`}
   </div>
-</section>
+  ${p.home ? `<div class="wl-scroll" aria-hidden="true"><i></i></div>` : ''}
+</section>`}
 <div class="wl-body">
-${bodySecs.join('\n')}
+${(D.resetProse(), D.transformProse(bodySecs.join('\n'), PROSELABEL(p)))}
 ${RELATED(p.slug)}
 </div>
-${p.home ? FINAL() : ''}
+${p.home ? FINAL() : ctaBand()}
 </main>
 ${FOOT()}
 </div>
+${p.script || ''}
 </body></html>`;
-  return head;
+  return localize(head, p.slug);
+};
+
+// GitHub Pages serves this repo under a sub-path (/eagleeye-content/), while the production
+// origin serves it at root. Root-absolute internal links (href="/how-it-works/") 404 on the
+// sub-path. Rewrite every internal root-relative href/src to a PAGE-RELATIVE path, which
+// resolves correctly on BOTH the preview sub-path and the production root. Every slug is a
+// single segment (/x/) or the home root (/), so a sub-page needs one "../" and home needs none.
+// Absolute https:// links (canonical, OG, JSON-LD, the /app SaaS) start with a scheme, not "/",
+// so they are untouched.
+const localize = (html, slug) => {
+  // Rewrite any in-body link still pointing at an OLD flat slug to its new nested URL.
+  for (const [o, n] of Object.entries(REMAP)) html = html.split(`"${o}"`).join(`"${n}"`);
+  // Page-relative prefix = one "../" per path segment of this page's slug (home = none,
+  // /x/ = one, /industries/plumbers/ = two). Resolves on both the preview sub-path and root.
+  const depth = slug === '/' ? 0 : slug.split('/').filter(Boolean).length;
+  const prefix = '../'.repeat(depth);
+  return html.replace(/\b(href|src)="\/(?!\/)([^"]*)"/g, (_m, attr, rest) => {
+    const to = rest === '' ? (prefix || './') : prefix + rest; // href="/" -> home
+    return `${attr}="${to}"`;
+  });
 };
 
 // ---- build ----
@@ -855,12 +1162,46 @@ const deCssRed = (css) => {
     });
   return css;
 };
-for (const f of ['dashboard.css', 'pages.css', 'theme.js', 'logo.svg', 'eagle.svg', 'sgen-logo.png', 'og-eagleeye.png'])
+for (const f of ['dashboard.css', 'site.css', 'site.js', 'wl-obj.js', 'world.js', 'logo.svg', 'eagle.svg', 'sgen-logo.png', 'og-eagleeye.png', 'city.bin', 'emblem.bin', 'pin.bin', 'person.bin'])
   if (existsSync(join(ROOT, 'src/app', f))) {
     // Original design preserved verbatim — copy CSS/SVG as-is (no recolour). The only
     // change in this reforge is copy/content, not the brand design (Jerome, 2026-11-19).
     await cp(join(ROOT, 'src/app', f), join(DIST, 'app', f));
   }
+
+// The city backdrop (wl-bg.js) is the app's code verbatim, which fetches its models from the
+// root-absolute /app/. These pages are also served under a sub-path (GitHub Pages), so the
+// dist copy resolves those few asset URLs from the script's own folder (ABASE) instead.
+{
+  const bg = readFileSync(join(ROOT, 'src/app/wl-bg.js'), 'utf8')
+    .replace(/"\/app\/(logo\.svg|sgen-logo\.png|emblem\.bin|pin\.bin|person\.bin|city\.bin)"/g, '(ABASE + "$1")')
+    // The scan story's last chapter has two buttons: sign-up goes to the real app, and its
+    // "How it works" (an in-page #how jump on the welcome page) opens this site's page.
+    .replace('h("a", { class: "wl-btn", href: "/app/signup" }', `h("a", { class: "wl-btn", href: "${APP}/signup" }`)
+    .replace('h("a", { class: "wl-btn ghost", href: "#how", onclick: wlJump }', 'h("a", { class: "wl-btn ghost", href: ABASE + "../how-it-works/" }')
+    // the city can be paused while a page's world covers it (world.js sets canvas.__paused)
+    .replace('if (still || raf || document.hidden) return;', 'if (still || raf || document.hidden || canvas.__paused) return;')
+    .replace('const onVis = () => schedule();', 'const onVis = () => schedule(); canvas.__resume = schedule;');
+  if (/"\/app\/[^"]+\.(bin|svg|png)"/.test(bg)) throw new Error('wl-bg.js: an /app/ asset URL was left root-absolute');
+  if (bg.includes('href: "/app/signup"') || bg.includes('href: "#how"')) throw new Error('wl-bg.js: scan-story links not rewritten');
+  if (!bg.includes('canvas.__paused') || !bg.includes('canvas.__resume = schedule')) throw new Error('wl-bg.js: city pause hook not applied');
+  await writeFile(join(DIST, 'app', 'wl-bg.js'), bg, 'utf8');
+}
+// SYNTAX GATE: every shipped script is parsed before it is copied, so a broken edit fails the
+// build instead of silently dropping a page to its fallback in the browser.
+{
+  const { execFileSync } = await import('node:child_process');
+  const { tmpdir } = await import('node:os');
+  for (const [f, ext] of [['world.js', '.mjs'], ['wl-obj.js', '.cjs'], ['site.js', '.cjs'], ['wl-bg.js', '.cjs']]) {
+    const tmp = join(tmpdir(), 'ee-check-' + f.replace(/.js$/, '') + ext);
+    await writeFile(tmp, readFileSync(join(ROOT, 'src/app', f), 'utf8'));
+    try { execFileSync(process.execPath, ['--check', tmp], { stdio: 'pipe' }); }
+    catch (e) { throw new Error('src/app/' + f + ' does not parse: ' + String(e.stderr || e.message)); }
+  }
+}
+// The hero objects (Blender, tools/blender/make_objects.py), and three.js for their worlds.
+await cp(join(ROOT, 'src/app/obj'), join(DIST, 'app', 'obj'), { recursive: true });
+await cp(join(ROOT, 'src/app/vendor/three'), join(DIST, 'app', 'vendor', 'three'), { recursive: true });
 
 let count = 0;
 for (const p of PAGES) {
@@ -869,6 +1210,21 @@ for (const p of PAGES) {
   await mkdir(dirname(out), { recursive: true });
   await writeFile(out, html, 'utf8');
   count++;
+  // Redirect stub at the OLD flat URL so a shared/indexed old link never 404s.
+  if (p.ckey && p.ckey !== p.slug) {
+    const oldFile = p.ckey.replace(/^\//, '') + 'index.html';
+    const oldDepth = p.ckey.split('/').filter(Boolean).length;
+    const rel = '../'.repeat(oldDepth) + p.slug.replace(/^\//, '');
+    const stub = `<!doctype html><html lang="en"><head><meta charset="utf-8">`
+      + `<title>Moved — Eagle Eye</title><meta name="robots" content="noindex,follow">`
+      + `<link rel="canonical" href="${ORIGIN}${p.slug}">`
+      + `<meta http-equiv="refresh" content="0; url=${rel}">`
+      + `<link rel="icon" href="${ORIGIN}/app/logo.svg" type="image/svg+xml"></head>`
+      + `<body><p>This page moved to <a href="${rel}">${p.slug}</a>.</p></body></html>`;
+    const oldOut = join(DIST, oldFile);
+    await mkdir(dirname(oldOut), { recursive: true });
+    await writeFile(oldOut, stub, 'utf8');
+  }
 }
 // sitemap + robots
 const now = new Date().toISOString().slice(0, 10);
@@ -879,7 +1235,53 @@ await writeFile(join(DIST, 'sitemap.xml'),
 // EE-ROBOTS-CONFIRM: noindex for now (Jerome, 2026-11-19) — the build stays out of the
 // index until the carry-back ship decision. Flip to `Allow: /` + per-page index,follow at ship.
 await writeFile(join(DIST, 'robots.txt'), `User-agent: *\nDisallow: /\n`, 'utf8');
+// Plain 404 (same document style) so a bad path still lands on a branded, navigable page.
+// A 404 is served for an unknown path, so the browser URL is not /404.html — page-relative
+// links cannot be resolved against it. Its internal links are made ABSOLUTE to the production
+// origin, which is correct from any path on either host.
+const page404 = `<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Page not found — Eagle Eye</title><meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/app/logo.svg" type="image/svg+xml">
+${FONTS}
+<script>(function(){var b=/github\\.io$/.test(location.hostname)?'/'+location.pathname.split('/')[1]+'/':'/',v='${ASSETVER}';
+document.write('<link rel="stylesheet" href="'+b+'app/dashboard.css?v='+v+'"><link rel="stylesheet" href="'+b+'app/site.css?v='+v+'">'
++'<script src="'+b+'app/wl-bg.js?v='+v+'" defer><\\/script><script src="'+b+'app/site.js?v='+v+'" defer><\\/script>');})();</script>
+</head><body>
+<div class="wl wl-anim wl-site">
+${NAV('/404')}
+<main><section class="wl-hero wl-hero-sub"><div class="wl-hero-copy">
+<h1><span class="wl-line">That page isn’t here</span></h1>
+<p class="wl-lede">The link may be old or mistyped. Try the pages below, or head back to the start.</p>
+<div class="wl-ctas"><a class="wl-btn big" href="/">Back to home</a></div>
+</div></section>
+<div class="wl-body">${RELATED('/404')}</div></main>
+${FOOT()}
+</div>
+</body></html>`;
+await writeFile(join(DIST, '404.html'),
+  page404.replace(/\b(href|src)="\/(?!\/)([^"]*)"/g, (_m, attr, rest) => `${attr}="${ORIGIN}/${rest}"`),
+  'utf8');
 // GitHub Pages serves raw files only when Jekyll is disabled — the build rm's dist each run,
 // so re-write .nojekyll every build (otherwise underscore/paths get Jekyll-processed).
 await writeFile(join(DIST, '.nojekyll'), '', 'utf8');
+// SPEED IS RANKING: the shipped dashboard.css keeps only the rules these pages can use (it is the
+// whole app's stylesheet, and it blocks the first paint). tools/prune-css.mjs says how it decides.
+{
+  const { pruneCss, usedTokens } = await import('./tools/prune-css.mjs');
+  const { readdirSync } = await import('node:fs');
+  const htmls = [];
+  (function walk(d) { for (const f of readdirSync(d, { withFileTypes: true })) { const p = join(d, f.name); if (f.isDirectory()) walk(p); else if (f.name.endsWith('.html')) htmls.push(readFileSync(p, 'utf8')); } })(DIST);
+  const scripts = ['site.js', 'wl-bg.js', 'wl-obj.js', 'world.js'].map(f => readFileSync(join(DIST, 'app', f), 'utf8'));
+  const full = readFileSync(join(ROOT, 'src/app/dashboard.css'), 'utf8');
+  const { css, kept, dropped } = pruneCss(full, usedTokens(htmls, scripts));
+  await writeFile(join(DIST, 'app', 'dashboard.css'), css, 'utf8');
+  console.log(`dashboard.css: ${Math.round(full.length / 1024)} KB -> ${Math.round(css.length / 1024)} KB (${kept} rules kept, ${dropped} not used by these pages)`);
+}
 console.log(`built ${count} pages + sitemap + robots + .nojekyll -> dist/`);
+// SEO GATE: the build fails if any page breaks the SEO audit (tools/seo-audit.mjs).
+{
+  const { execFileSync } = await import('node:child_process');
+  try { console.log(execFileSync(process.execPath, [join(ROOT, 'tools/seo-audit.mjs'), DIST], { encoding: 'utf8' }).trim()); }
+  catch (e) { console.error(String(e.stdout || '') + String(e.stderr || '')); throw new Error('SEO audit failed — see above'); }
+}
