@@ -32,7 +32,9 @@
 .wl-site .wl-drop.sm .wl-drop-grid { grid-template-columns:1fr; }
 .wl-site .wl-drop.wide { width:680px; }
 .wl-site .wl-drop.wide .wl-drop-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); }
-.wl-site .wl-drop.wide .wl-fl { padding:7px 12px; font-size:13.5px; }
+.wl-site .wl-drop.wide .wl-fl { padding:6px 10px; gap:10px; font-size:13.5px; }
+.wl-site .wl-drop.wide .wl-fl-i { width:26px; height:26px; border-radius:8px; }
+.wl-site .wl-fl-i svg { width:16px; height:16px; }
 .wl-site .wl-drop .wl-links-h, .wl-site .wl-drop-h { grid-column:1 / -1; padding:10px 12px 4px; font:600 11px var(--mono, monospace);
   letter-spacing:.12em; text-transform:uppercase; color:var(--w-ink-3); }
 .wl-site .wl-drop a::after { display:none; }
