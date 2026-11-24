@@ -1510,19 +1510,27 @@ function mountWlBg() {
   var reduce = (typeof motionOff === 'function') && motionOff();
   var fieldCanvas = h('canvas', { class: 'wl-city', 'aria-hidden': 'true' });
   var shade = h('div', { class: 'wl-shade', 'aria-hidden': 'true' });
-  // The CALM HERO BACKDROP only — city + emblem at the fixed hero camera (cam() == 0),
-  // story = null. The scan-STORY (wlScanStory grid overlay + "NN OF 07" captions) and
-  // wlParallax are NOT mounted: on the live welcome they are driven by scrolling through
-  // its tall narrative (dashboard.js:2355 reads the hero rect + scroll); on these static
-  // SEO pages that narrative does not exist, so they mis-map and take over the screen.
-  // Fixed camera gives the clean live-hero city on every page, stable at any scroll.
+  var hero = page.querySelector('.wl-hero') || page.querySelector('section.fx');
   page.insertBefore(shade, page.firstChild);
   page.insertBefore(fieldCanvas, page.firstChild);
-  var cam0 = function () { return 0; };
+  // THE HOME PAGE (data-xp) gets the welcome page's whole experience, wired exactly as
+  // welcomeView does it: the scan story (wlScanStory, the seven pinned "NN OF 07" chapters)
+  // placed straight after the hero, the city camera driven by page scroll (camOf = page._pp),
+  // and wlParallax driving the hero fade, the shade and the story's progress.
+  // THE INNER PAGES have no story: the city holds the hero camera (cam() == 0) so it stays
+  // the calm hero shot at any scroll, and wlParallax only fades the hero and dims the shade.
+  var xp = page.hasAttribute('data-xp') && hero;
+  var story = xp ? wlScanStory() : null;
+  if (story) hero.parentNode.insertBefore(story.el, hero.nextSibling);
+  // The city camera follows the page's scroll on every page (wlParallax keeps page._pp), so the
+  // skyline drifts and turns behind each page's own story; the home page also plays its scan story.
+  var camOf = function () { return page._pp || 0; };
   requestAnimationFrame(function () {
     if (!page.isConnected) return;
-    if (reduce) { try { rankCity(fieldCanvas, cam0); } catch (e) { console.warn('wl-bg 2D', e); } return; }
-    if (!rankCityGL(fieldCanvas, cam0, null, null)) rankCity(fieldCanvas, cam0);
+    // The GPU city when the browser has WebGL; the 2D canvas city otherwise, and the story's
+    // captions still read in order as the page scrolls (welcomeView).
+    if (!rankCityGL(fieldCanvas, camOf, null, story)) { rankCity(fieldCanvas, camOf); if (story) story.el.classList.add('flat'); }
+    if (hero) wlParallax(page, hero, shade, story);
   });
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountWlBg);

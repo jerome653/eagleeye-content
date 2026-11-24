@@ -8,6 +8,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import * as D from './design.mjs';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const CAP = join(ROOT, 'audit/capture');
@@ -19,160 +20,27 @@ const OGIMG = ORIGIN + '/app/og-eagleeye.png';
 // Asset cache-bust: GitHub Pages serves /app/*.css with max-age=600, so a CSS fix can
 // show stale on an edge for up to 10 min. Version the stylesheet URL off the pages.css
 // content hash — a change mints a new URL the CDN has never cached, so the fix is instant.
-const ASSETVER = createHash('sha1').update(readFileSync(join(ROOT, 'src/app/pages.css'))).digest('hex').slice(0, 10);
+const ASSETVER = createHash('sha1').update(['dashboard.css', 'site.css', 'site.js', 'wl-bg.js', 'wl-obj.js', 'world.js']
+  .map((n) => readFileSync(join(ROOT, 'src/app', n), 'utf8')).join('\n')).digest('hex').slice(0, 10);
 
 const readFrag = async (f) => existsSync(join(FRG, f)) ? await readFile(join(FRG, f), 'utf8') : '';
 // Fragments are optional: this build renders plain, self-contained document pages from
 // content.mjs + faqs.mjs + the page map alone, so it runs with no captured SPA fragments.
 const shell = existsSync(join(FRG, '_shell.json')) ? JSON.parse(readFileSync(join(FRG, '_shell.json'), 'utf8')) : {};
 
-// PLAIN document stylesheet (Jerome 2026-11-23: "plain content like word"). Inlined per page
-// so every page is fully self-contained — no external CSS/JS/font, nothing to break on Pages.
-// Readable single-column document: clean headings, body prose, lists, simple tables. The old
-// wl-* app classes stay in the markup and are styled plainly here; decorative blocks are hidden.
-const PLAINCSS = `
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:#fff;color:#1b1b1b;font:400 18px/1.7 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-.wl{max-width:820px;margin:0 auto;padding:0 24px}
-a{color:#0b5fb0;text-decoration:underline;text-underline-offset:2px}
-a:hover{color:#063e74}
-/* ===== header: full-bleed sticky bar, inner wrapper breathes wider than the doc column ===== */
-.wl-nav{background:rgba(255,255,255,.92);backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid #e7e9ea;position:sticky;top:0;z-index:50}
-.wl-nav-in{max-width:1120px;margin:0 auto;padding:13px 24px;display:flex;align-items:center;gap:10px 26px}
-.wl-brand{display:inline-flex;align-items:center;gap:9px;font-weight:800;font-size:18px;letter-spacing:.06em;text-decoration:none;color:#141414;white-space:nowrap}
-.wl-brand .mark-2{color:#0b8057}
-.wl-brand .wl-eye{width:20px;height:20px;border-radius:50%;border:3px solid #0b8057;position:relative;display:inline-block;flex:0 0 auto}
-.wl-brand .wl-eye::after{content:"";position:absolute;inset:4px;border-radius:50%;background:#0b8057}
-.wl-links{display:flex;flex-wrap:wrap;gap:4px 22px;margin-left:8px}
-.wl-links a{font-size:15px;font-weight:500;color:#3a3f45;padding:4px 0}
-.wl-links a[aria-current="page"]{color:#0b8057;font-weight:700}
-.wl-acts{margin-left:auto;display:flex;gap:16px;align-items:center}
-.wl-acts a{font-size:15px}
-.wl-acts .wl-link{color:#3a3f45;font-weight:500}
-/* chrome links (nav, footer, related) read as navigation, not prose: no underline at rest */
-.wl-links a,.wl-acts a,.wl-foot a,.wl-related-list a,.wl-brand{text-decoration:none}
-.wl-links a:hover,.wl-acts .wl-link:hover,.wl-foot a:hover,.wl-related-list a:hover{color:#0b8057;text-decoration:underline}
-.wl-menu-btn,.wl-menu,.wl-maps,.wl-hero-media,.wl-visual,.wl-map,.wl-grid,.wl-cell,.wl-readout,.wl-live,.wl-plus,.wl-squah{display:none!important}
-@media(max-width:820px){.wl-links{display:none}.wl-nav-in{gap:10px 14px}}
-/* header hierarchy: pillar dropdowns (desktop) */
-.wl-nd{position:relative;display:inline-flex}
-.wl-nd-top{display:inline-flex;align-items:center;gap:3px}
-.wl-caret{font-size:10px;line-height:1;color:#9aa2a0}
-.wl-dd{position:absolute;top:100%;left:0;margin-top:10px;min-width:210px;background:#fff;border:1px solid #e7e9ea;border-radius:12px;box-shadow:0 14px 36px rgba(16,32,28,.15);padding:10px;display:none;z-index:60}
-.wl-dd::before{content:"";position:absolute;top:-10px;left:0;right:0;height:10px}
-.wl-dd a{display:block;font-size:14px;font-weight:500;color:#3a3f45;padding:7px 10px;border-radius:8px;white-space:nowrap}
-.wl-dd a:hover{background:#f1faf6;color:#0b8057;text-decoration:none}
-.wl-nd:hover>.wl-dd,.wl-nd:focus-within>.wl-dd{display:block}
-.wl-dd-wide{min-width:540px;column-count:3;column-gap:6px}
-.wl-dd-wide a{break-inside:avoid}
-/* header hierarchy: mobile hamburger menu (was dead — enable it with the same IA) */
-@media(max-width:820px){
-  .wl-menu-btn{display:inline-flex!important;flex-direction:column;justify-content:center;gap:4px;width:40px;height:34px;border:1px solid #d7dcd9;border-radius:9px;background:#fff;cursor:pointer;padding:0 9px}
-  .wl-menu-btn i{display:block;height:2px;width:100%;background:#2a2f2d;border-radius:2px}
-  .wl-nav.open .wl-menu{display:flex!important;flex-direction:column;position:absolute;top:100%;left:0;right:0;background:#fff;border-top:1px solid #e7e9ea;box-shadow:0 20px 40px rgba(16,32,28,.16);max-height:74vh;overflow:auto;padding:10px 20px 22px}
-  .wl-menu .wl-menu-h{font-size:15px;font-weight:700;color:#141414;padding:12px 0 4px;border-top:1px solid #eef1ef}
-  .wl-menu .wl-menu-h:first-child{border-top:0}
-  .wl-menu .wl-menu-sub{font-size:14px;color:#4a5551;padding:6px 0 6px 14px}
-}
-/* hero */
-main{display:block}
-.wl-hero{padding:26px 0 6px}
-h1{font-size:34px;line-height:1.2;font-weight:700;margin:.2em 0 .35em}
-.wl-line{display:block}
-.wl-lede{font-size:20px;line-height:1.55;color:#333;margin:.4em 0 1em}
-.wl-ctas{margin:14px 0}
-.wl-btn,.wl-btn.big{display:inline-block;background:#0b8057;color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:600;font-size:16px;margin-right:10px}
-.wl-btn.ghost{background:#fff;color:#0b8057;border:1px solid #0b8057}
-.wl-note{font-size:14px;color:#666}
-/* body sections */
-.wl-body{padding:6px 0 10px}
-.wl-sec{padding:18px 0;border-top:1px solid #ececec}
-.wl-sec:first-child{border-top:0}
-.wl-prose,.wl-head{max-width:none}
-h2{font-size:25px;line-height:1.25;font-weight:700;margin:1.1em 0 .4em}
-h3{font-size:20px;font-weight:700;margin:1.2em 0 .3em}
-p{margin:.6em 0}
-ul,ol{margin:.6em 0;padding-left:1.3em}
-li{margin:.3em 0}
-b,strong{font-weight:700}
-.wl-k{font-weight:600;color:#0b8057}
-/* numbers */
-.wl-nums{display:block;margin:.4em 0}
-.wl-numcard{padding:10px 0;border-top:1px dotted #ddd}
-.wl-numcard b{font-size:17px}
-.wl-numname{color:#555;font-style:italic;margin-left:8px}
-/* faq */
-.wl-faq .wl-q{border-bottom:1px solid #eaeaea;padding:8px 0}
-.wl-q summary{cursor:pointer;font-weight:600;font-size:17px;list-style:none}
-.wl-q summary::-webkit-details-marker{display:none}
-.wl-q[open] summary{margin-bottom:6px}
-.wl-q p{color:#333}
-/* related */
-.wl-related-list{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px}
-.wl-related-list a{font-size:15px}
-/* cta band */
-.wl-cta{background:#f3f7f5;border:1px solid #d9e6e0;border-radius:8px;padding:20px 22px;margin:16px 0}
-.wl-cta h2{margin-top:0}
-/* tables */
-table{border-collapse:collapse;width:100%;margin:1em 0;font-size:16px}
-th,td{border:1px solid #d7d7d7;padding:8px 10px;text-align:left}
-th{background:#f4f4f4}
-/* ===== footer: full-bleed tinted band, inner wrapper, structured columns ===== */
-.wl-foot{background:#0f1a17;color:#c7d2cd;margin-top:56px;font-size:14px}
-.wl-foot a{color:#aeb9b4}
-.wl-foot-in{max-width:1120px;margin:0 auto;padding:44px 24px 20px}
-/* top strip: brand + pitch on the left, a CTA on the right */
-.wl-foot-top{display:flex;flex-wrap:wrap;gap:18px 40px;align-items:flex-start;justify-content:space-between;padding-bottom:30px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:30px}
-.wl-foot-brand{max-width:360px}
-.wl-foot-brand .wl-brand{color:#fff;font-weight:800;font-size:18px;letter-spacing:.06em;display:inline-flex;align-items:center;gap:9px}
-.wl-foot-brand .wl-brand .mark-2{color:#2fbf8f}
-.wl-foot-brand .wl-eye{width:20px;height:20px;border-radius:50%;border:3px solid #2fbf8f;position:relative;display:inline-block}
-.wl-foot-brand .wl-eye::after{content:"";position:absolute;inset:4px;border-radius:50%;background:#2fbf8f}
-.wl-foot-brand p{color:#8ea39a;margin:.6em 0 0;line-height:1.5}
-.wl-foot-cta{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
-.wl-foot-cta .wl-btn{background:#17a673;color:#fff;padding:11px 20px;border-radius:7px;font-weight:600}
-.wl-foot-cta .wl-btn:hover{background:#1dbd84;text-decoration:none}
-.wl-foot-cta small{color:#7c908780}
-/* link columns */
-.wl-foot-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:26px 32px}
-.wl-foot-col{display:flex;flex-direction:column;gap:7px}
-.wl-foot-col b{color:#fff;margin-bottom:4px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
-.wl-foot-col a{font-size:13.5px;line-height:1.3}
-.wl-foot-col a:hover{color:#fff}
-/* the long by-industry list tiles into columns instead of one tall tower */
-.wl-foot-col-wide{grid-column:1/-1;margin-top:8px}
-.wl-foot-col-wide b{display:block;margin-bottom:10px;color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
-.wl-foot-industry{columns:5 150px;column-gap:28px}
-.wl-foot-industry a{display:block;font-size:13px;margin:5px 0;break-inside:avoid}
-.wl-foot-industry a:hover{color:#fff}
-/* bottom bar */
-.wl-copy{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;color:#7c9087;border-top:1px solid rgba(255,255,255,.1);padding-top:18px;margin-top:34px;font-size:13px}
-.wl-copy a{color:#8ea39a}
-/* hub landing card grid + breadcrumb */
-.wl-hubgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin:10px 0}
-.wl-hubcard{display:block;padding:16px 18px;border:1px solid #e2e6e4;border-radius:12px;background:#fff;transition:border-color .15s,box-shadow .15s,transform .15s}
-.wl-hubcard:hover{border-color:#17a673;box-shadow:0 8px 22px rgba(0,0,0,.07);transform:translateY(-1px)}
-.wl-hubcard b{display:block;color:#0b1f19;font-size:15px}
-.wl-crumb{max-width:760px;margin:0 auto;padding:18px 0 0;font-size:13px;color:#5c6b64}
-.wl-crumb a{color:#17a673}.wl-crumb a:hover{text-decoration:underline}.wl-crumb span{color:#9aa8a1;margin:0 2px}
-.wl-hubcard span{display:block;margin-top:4px;color:#5c6b64;font-size:12.5px;font-weight:400}
-/* comparison table */
-.wl-cmp-wrap{overflow-x:auto;margin:10px 0}
-.wl-cmp{width:100%;border-collapse:collapse;font-size:14px}
-.wl-cmp th,.wl-cmp td{text-align:left;padding:10px 12px;border-bottom:1px solid #e7e9ea;vertical-align:top}
-.wl-cmp thead th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#5c6b64}
-.wl-cmp thead th:nth-child(2){color:#0b8057}
-.wl-cmp tbody th{font-weight:600;color:#0b1f19;width:28%}
-.wl-cmp td:nth-child(2){background:#f1faf6}
-.wl-cmp-note{font-size:12.5px;color:#7a837e;margin:8px 2px 0}
-/* free-tool credit calculator */
-.wl-calc{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;padding:18px;border:1px solid #e2e6e4;border-radius:12px;background:#fff;margin:14px 0}
-.wl-calc label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#5c6b64}
-.wl-calc select{padding:8px 10px;border:1px solid #cfd6d2;border-radius:8px;font-size:14px;background:#fff}
-.wl-calc-out{width:100%;margin:6px 0 0;font-size:16px;font-weight:600;color:#0b1f19}
-@media(max-width:600px){h1{font-size:28px}.wl-lede{font-size:18px}.wl{padding:0 18px}.wl-foot-industry{columns:2 130px}}
-`;
+// DESIGN (Jerome 2026-11-24): the app's own welcome-page design, from the Eagle Eye app
+// repo (eagleeyes/ui/app — reference only, never edited from here). dashboard.css is copied
+// verbatim into src/app and carries the whole look; src/app/site.css styles only the pieces
+// these content pages have that the welcome page does not; src/app/site.js is the welcome
+// page's behaviour (bar, dropdowns, glow, reveal); src/app/wl-bg.js is its city backdrop.
+// Content, URLs and per-page SEO are unchanged.
+const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">`;
+const ASSETS_HEAD = () => `${FONTS}
+<link rel="stylesheet" href="/app/dashboard.css?v=${ASSETVER}">
+<link rel="stylesheet" href="/app/site.css?v=${ASSETVER}">
+<script src="/app/wl-bg.js?v=${ASSETVER}" defer></script>
+<script src="/app/site.js?v=${ASSETVER}" defer></script>`;
 
 // ---- the page map: slug -> { title, desc, h1, lede, sections[], intro?, extraFaq? } ----
 // title <=60, desc <=155. lede = page H1 subhead. intro = enrichment paragraph(s) (true).
@@ -699,51 +567,71 @@ const rewrite = (html) => stripRender(deRed(html))
   .replace(/href="#plans"/g, 'href="/pricing/"')
   .replace(/href="#faq"/g, 'href="/faq/"');
 
-// Brand wordmark with a small "eye" glyph (pure CSS, no image dependency).
-const BRAND = `<a class="wl-brand" href="/"><span class="wl-eye"></span><span><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></a>`;
+// The app's brand: the logo mark + the EAGLE EYE wordmark (wlHeader, dashboard.js).
+const BRAND = (tag = 'a') => `<${tag} class="wl-brand"${tag === 'a' ? ' href="/"' : ''}><img src="/app/logo.svg" alt="" width="30" height="30"><span class="mark-w"><span class="mark-1">EAGLE</span> <span class="mark-2">EYE</span></span></${tag}>`;
 
-// Reinvented header: full-bleed sticky bar, inner wrapper, lean primary nav, pill CTA.
-// Header IA: the real pillar hierarchy. Each pillar links to its hub and drops its children.
-// Built at call time so COMPARE/FREETOOLS (defined later) are populated.
+// Small line icons for the dropdown items (24-unit, stroked like the app's ICONS).
+const SVG = (d) => `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICON = {
+  product: SVG('<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'),
+  solutions: SVG('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M21.5 20a6.5 6.5 0 0 0-4-6"/>'),
+  tracking: SVG('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'),
+  learn: SVG('<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>'),
+  compare: SVG('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/>'),
+  tools: SVG('<rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M8.5 6.5h7"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01M8.5 18h.01M12 18h.01M15.5 18h.01"/>'),
+};
+
+// Header IA: the same pillar hierarchy as before (every hub and every child page is linked
+// from the header), set in the welcome page's bar. The bar has room for seven labels, so
+// Learn, Compare and Free tools share one "Resources" panel under their own headings.
+// [label, hub href, groups: [[heading|null, icon, items[[href, title]]]], panel class]
 const HEADERGROUPS = () => [
-  ['Product', '/how-it-works/', NAVSET.slice(0, 6)],
-  ['Industries', '/industries/', VERTICALS],
-  ['Solutions', '/solutions/', SOLUTIONS],
-  ['Tracking', '/tracking/', TRACKING],
-  ['Learn', '/learn/', LEARN],
-  ['Compare', '/compare/', (COMPARE?.hub.items || []).map((it) => [it.slug, 'vs ' + it.name])],
-  ['Free tools', '/free-tools/', (typeof FREETOOLS !== 'undefined' ? FREETOOLS : []).filter((p) => p.slug !== '/free-tools/').map((p) => [p.slug, p.h1])],
-  ['Pricing', '/pricing/', null],
-  ['FAQ', '/faq/', null],
+  ['Product', '/how-it-works/', [[null, 'product', NAVSET.slice(0, 6)]], ''],
+  ['Industries', '/industries/', [[null, null, VERTICALS]], 'wide'],
+  ['Solutions', '/solutions/', [[null, 'solutions', SOLUTIONS]], 'sm'],
+  ['Tracking', '/tracking/', [[null, 'tracking', TRACKING]], ''],
+  ['Resources', '/learn/', [
+    ['Learn', 'learn', [['/learn/', 'All guides'], ...LEARN]],
+    ['Compare', 'compare', [['/compare/', 'All comparisons'], ...(COMPARE?.hub.items || []).map((it) => [it.slug, 'vs ' + it.name])]],
+    ['Free tools', 'tools', [['/free-tools/', 'All free tools'], ...(typeof FREETOOLS !== 'undefined' ? FREETOOLS : []).filter((p) => p.slug !== '/free-tools/').map((p) => [p.slug, p.h1])]],
+  ], 'r'],
+  ['Pricing', '/pricing/', null, ''],
+  ['FAQ', '/faq/', null, ''],
 ];
-const NAV = (cur) => { const G = HEADERGROUPS(); return `<header class="wl-nav" data-static="1"><div class="wl-nav-in">
-  ${BRAND}
-  <nav class="wl-links" aria-label="Pages">${G.map(([label, href, items]) => items && items.length
-    ? `<div class="wl-nd"><a class="wl-nd-top" href="${href}">${label}<span class="wl-caret">▾</span></a><div class="wl-dd${label === 'Industries' ? ' wl-dd-wide' : ''}">${items.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div></div>`
+// The panel's closing "all" link to the pillar hub (Product's hub is How it works, already its first item;
+// Resources lists each of its three hubs at the top of its own group).
+const ALLLABEL = { Industries: 'All industries', Solutions: 'All solutions', Tracking: 'All tracking' };
+const flItem = (href, title, ic) => `<a class="wl-fl" href="${href}">${ic ? `<span class="wl-fl-i">${ICON[ic]}</span>` : ''}<span>${title}</span></a>`;
+const NAV = (cur) => { const G = HEADERGROUPS(); return `<header class="wl-nav">
+  ${BRAND()}
+  <nav class="wl-links" aria-label="Site">${G.map(([label, href, groups, cls], gi) => groups
+    ? `<div class="wl-drop-wrap"><a class="wl-drop-btn" href="${href}">${label}</a><button type="button" class="wl-drop-btn wl-drop-tog" aria-expanded="false" aria-haspopup="true" aria-label="${label} pages"><i class="wl-caret" aria-hidden="true"></i></button>`
+      + `<div class="wl-drop${cls ? ' ' + cls : ''}"><div class="wl-drop-grid">`
+      + groups.map(([h, ic, items]) => (h ? `<b class="wl-drop-h">${h}</b>` : '') + items.map(([u, t]) => flItem(u, t, ic)).join('')).join('')
+      + `</div>${ALLLABEL[label] ? `<a class="wl-drop-all" href="${href}">${ALLLABEL[label]} →</a>` : ''}</div></div>`
     : `<a href="${href}"${href === cur ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</nav>
   <div class="wl-acts"><a class="wl-link" href="${APP}/login">Sign in</a><a class="wl-btn" href="${APP}/signup">Get started</a>
-    <button type="button" class="wl-menu-btn" aria-label="Menu" aria-expanded="false" onclick="var n=this.closest('.wl-nav');var o=n.classList.toggle('open');this.setAttribute('aria-expanded',o)"><i></i><i></i></button></div>
-  <nav class="wl-menu" aria-label="Pages">${G.map(([label, href, items]) => `<a class="wl-menu-h" href="${href}">${label}</a>` + (items && items.length ? items.map(([h, t]) => `<a class="wl-menu-sub" href="${h}">${t}</a>`).join('') : '')).join('')}<a href="${APP}/login">Sign in</a></nav>
-</div></header>`; };
+    <button type="button" class="wl-menu-btn" aria-label="Menu" aria-expanded="false"><i></i><i></i></button></div>
+  <nav class="wl-menu" aria-label="Site">${G.map(([label, href, groups]) => groups
+    ? `<details><summary>${label}<i class="wl-caret" aria-hidden="true"></i></summary>${ALLLABEL[label] ? `<a class="all" href="${href}">${ALLLABEL[label]} →</a>` : ""}`
+      + groups.map(([, , items]) => items.map(([u, t]) => `<a href="${u}">${t}</a>`).join('')).join('') + `</details>`
+    : `<a href="${href}">${label}</a>`).join('')}<a href="${APP}/login">Sign in</a></nav>
+</header>`; };
 
-// Reinvented footer: tinted band, brand + CTA strip, structured columns, tiled industries, legal bar.
-const FOOT = () => `<footer class="wl-foot"><div class="wl-foot-in">
-  <div class="wl-foot-top">
-    <div class="wl-foot-brand">${BRAND}
-      <p>Geo-grid rank tracking for Google Maps and Apple Maps — see where a business ranks street by street, and prove the lift to every client.</p></div>
-    <div class="wl-foot-cta"><a class="wl-btn" href="${APP}/signup">Start with 10 free scans</a><small>No card needed. Your first scan of your own site is free.</small></div>
-  </div>
-  <div class="wl-foot-cols">
-    <div class="wl-foot-col"><b>Product</b>${NAVSET.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-    <div class="wl-foot-col"><b><a href="/solutions/">Solutions</a></b>${SOLUTIONS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-    <div class="wl-foot-col"><b><a href="/tracking/">Tracking</a></b>${TRACKING.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-    <div class="wl-foot-col"><b><a href="/learn/">Learn</a></b>${LEARN.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
-    <div class="wl-foot-col"><b>Account</b><a href="${APP}/login">Sign in</a><a href="${APP}/signup">Create account</a></div>
-    <div class="wl-foot-col-wide"><b><a href="/industries/">By industry</a></b><div class="wl-foot-industry">${VERTICALS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div></div>
-  </div>
-  <div class="wl-copy"><span>© ${new Date().getFullYear()} Eagle Eye</span><span><a href="${APP}/login">Sign in</a> · <a href="${APP}/signup">Create account</a></span></div>
-  </div>
+// The welcome page's footer (brand + columns + copyright row), with the site's full link set.
+const FOOT = () => `<footer class="wl-foot">
+  <div class="wl-foot-brand">${BRAND('div')}
+    <p>Geo-grid rank tracking for Google Maps and Apple Maps — see where a business ranks street by street, and prove the lift to every client.</p>
+    <a class="wl-btn" href="${APP}/signup">Start with 10 free scans</a><small>No card needed. Your first scan of your own site is free.</small></div>
+  <div class="wl-foot-col"><b>Product</b>${NAVSET.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+  <div class="wl-foot-col"><b><a href="/solutions/">Solutions</a></b>${SOLUTIONS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+  <div class="wl-foot-col"><b><a href="/tracking/">Tracking</a></b>${TRACKING.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+  <div class="wl-foot-col"><b><a href="/learn/">Learn</a></b>${LEARN.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+  <div class="wl-foot-col"><b>Account</b><a href="${APP}/login">Sign in</a><a href="${APP}/signup">Create account</a></div>
+  <div class="wl-foot-wide"><b><a href="/industries/">By industry</a></b><div class="wl-foot-ind">${VERTICALS.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div></div>
+  <div class="wl-copy"><small>© ${new Date().getFullYear()} Eagle Eye</small><span><a href="${APP}/login">Sign in</a> · <a href="${APP}/signup">Create account</a></span></div>
 </footer>`;
+
 
 const FINAL = () => rewrite(shell.final || '');
 
@@ -865,19 +753,20 @@ const gridCard = (slug) => {
   </div></div>`;
 };
 // The three numbers every scan folds the grid into — definitions, no fabricated values.
-const numbersSection = () => `<section class="wl-sec wl-numsec"><div class="wl-head"><h2>Three numbers, every scan</h2>
-  <div class="wl-head-r"><p class="wl-lede">Three numbers a client remembers and a trend that proves your work paid off. Every scan rolls the whole grid into them — no spreadsheet, no hand-waving.</p></div></div>
-  <div class="wl-nums">
-    <div class="wl-numcard"><b>LSOV</b><span class="wl-numname">Local Share of Voice</span><p>How much of the whole grid finds the business near the top — one number for the entire map.</p></div>
-    <div class="wl-numcard"><b>ARP</b><span class="wl-numname">Average Rank, found</span><p>The mean position across only the points that return the business at all.</p></div>
-    <div class="wl-numcard"><b>ATRP</b><span class="wl-numname">Average Total Rank</span><p>The same average, counting every point that missed the business entirely — the honest one.</p></div>
-  </div></section>`;
+const numbersSection = () => `<section class="wl-sec wl-numsec">${D.head('Three numbers, every scan',
+  'Three numbers a client remembers and a trend that proves your work paid off. Every scan rolls the whole grid into them — no spreadsheet, no hand-waving.')}`
+  + D.figs([
+    { tag: 'Local Share of Voice', value: 'LSOV', label: 'Local Share of Voice', more: 'How much of the whole grid finds the business near the top — one number for the entire map.', art: 'fa-grid' },
+    { tag: 'Average Rank, found', value: 'ARP', label: 'Average Rank, found', more: 'The mean position across only the points that return the business at all.', art: 'fa-list' },
+    { tag: 'Average Total Rank', value: 'ATRP', label: 'Average Total Rank', more: 'The same average, counting every point that missed the business entirely — the honest one.', art: 'fa-one' },
+  ], 'wl-figs-3') + `</section>`;
 // Closing conversion band (every page; home keeps its captured FINAL instead).
-const ctaBand = () => `<section class="wl-sec wl-ctasec"><div class="wl-cta">
+// Set as the welcome page's closing call (.wl-final): back over the city, after the body band.
+const ctaBand = () => `<section class="wl-final">
   <h2>See the blocks you're winning — and the ones you're not</h2>
-  <p>Run a real geo-grid scan on your own business, any size, no card. In minutes you'll see every block you own, every block a rival is taking, and the one number you can hand a client.</p>
+  <p class="wl-lede">Run a real geo-grid scan on your own business, any size, no card. In minutes you'll see every block you own, every block a rival is taking, and the one number you can hand a client.</p>
   <div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a><a class="wl-btn ghost big" href="${APP}/login">Sign in</a></div>
-</div></section>`;
+</section>`;
 
 // ---- nest flat pages under hubs ----
 // Keep ckey (original slug) for CONTENT/FAQS lookup; move slug + file to the new nested URL.
@@ -898,7 +787,7 @@ const HUBPAGES = [
     sections: [] },
   { slug: '/solutions/', file: 'solutions/index.html', hub: '/solutions/',
     title: 'Solutions — Agencies & Multi-Location | Eagle Eye',
-    desc: 'Local rank tracking built for agencies proving SEO to clients and brands watching rank across every location — one account, one set of numbers, branded reports.',
+    desc: 'Local rank tracking for agencies proving SEO to clients and brands watching every location — one account, one set of numbers, branded reports.',
     h1: 'Built for how you work',
     lede: 'One agency managing fifty clients, or one brand managing fifty locations — Eagle Eye turns scattered map rankings into one clear, shareable picture. Client workspaces, a grid per location, and branded reports that make progress obvious, without a spreadsheet.',
     sections: [] },
@@ -939,8 +828,8 @@ const FREETOOLS = [
     lede: 'Start free, no card. Run a real geo-grid scan on your own business, or work out what a scan will cost — before you sign up.',
     sections: [],
     _intro: `<div class="wl-hubgrid">`
-      + `<a class="wl-hubcard" href="/free-tools/geo-grid-checker/"><b>Free geo-grid check</b><span>Run your first scan on your own business — any grid size, no card.</span></a>`
-      + `<a class="wl-hubcard" href="/free-tools/scan-cost-calculator/"><b>Scan credit calculator</b><span>See exactly how many credits a grid size and schedule costs — before you sign up.</span></a>`
+      + `<a class="wl-hubcard wl-glow" href="/free-tools/geo-grid-checker/"><b>Free geo-grid check</b><span>Run your first scan on your own business — any grid size, no card.</span></a>`
+      + `<a class="wl-hubcard wl-glow" href="/free-tools/scan-cost-calculator/"><b>Scan credit calculator</b><span>See exactly how many credits a grid size and schedule costs — before you sign up.</span></a>`
       + `</div>` },
   { slug: '/free-tools/geo-grid-checker/', file: 'free-tools/geo-grid-checker/index.html',
     title: 'Free Geo-Grid Rank Check — No Card | Eagle Eye',
@@ -957,7 +846,7 @@ const FREETOOLS = [
     lede: 'One credit scans one grid point. Pick a grid and a schedule to see the credits — no account needed.',
     sections: [],
     _intro: `<p>A scan spends one credit per grid point, so the credits depend only on the grid size and how often it runs. Pick both to see the cost. For the dollar price, see <a href="/pricing/">the plans</a> — credits you buy never expire.</p>`
-      + `<div class="wl-calc">`
+      + `<div class="wl-tcalc wl-glow">`
       + `<label>Grid size <select id="eeGrid">`
       + `<option value="3">3 × 3 (9 points)</option><option value="5">5 × 5 (25 points)</option>`
       + `<option value="7">7 × 7 (49 points)</option><option value="9" selected>9 × 9 (81 points)</option>`
@@ -965,7 +854,7 @@ const FREETOOLS = [
       + `<option value="15">15 × 15 (225 points)</option><option value="21">21 × 21 (441 points)</option>`
       + `</select></label>`
       + `<label>How often <select id="eeFreq"><option value="1">Once</option><option value="4">Weekly (×4 / month)</option><option value="30">Daily (×30 / month)</option></select></label>`
-      + `<p class="wl-calc-out" id="eeOut"></p></div>`,
+      + `<p class="wl-tcalc-out" id="eeOut"></p></div>`,
     script: `<script>(function(){var g=document.getElementById('eeGrid'),f=document.getElementById('eeFreq'),o=document.getElementById('eeOut');function calc(){var n=+g.value,pts=n*n,mo=pts*(+f.value);o.textContent=pts+' credits per scan'+((+f.value>1)?' \\u00b7 '+mo+' credits per month':'')+' \\u2014 1 credit per grid point.';}g.onchange=f.onchange=calc;calc();})();</script>` },
 ];
 for (const p of FREETOOLS) p.ckey = p.slug;
@@ -1014,11 +903,8 @@ for (const [ik, ilabel, pain] of FLAGSHIP) {
 PAGES.push(...CITYPAGES);
 
 // Hub landing lists every child in its cluster as a card grid.
-const hubGrid = (hub) => {
-  const items = HUBSETS[hub] || [];
-  return `<section class="wl-sec"><div class="wl-hubgrid">${items.map(([h, t]) =>
-    `<a class="wl-hubcard" href="${h}"><b>${t}</b></a>`).join('')}</div></section>`;
-};
+const HUBICON = { '/industries/': 'pin', '/solutions/': 'members', '/tracking/': 'target', '/learn/': 'guide' };
+const hubGrid = (hub) => `<section class="wl-sec">${D.excl((HUBSETS[hub] || []).map(([h, t]) => ({ href: h, title: t })), { iconName: HUBICON[hub] || 'pin' })}</section>`;
 // Two-way breadcrumb: every nested leaf links back up to its hub and home.
 const HUBLABEL = { industries: 'Industries', solutions: 'Solutions', tracking: 'Tracking', learn: 'Learn', compare: 'Compare', 'free-tools': 'Free tools' };
 const CRUMBHUBS = new Set(['/compare/', '/free-tools/']);
@@ -1038,14 +924,11 @@ const CRUMB = (p) => {
   return `<nav class="wl-crumb" aria-label="Breadcrumb">` + parts.join(' <span>›</span> ') + `</nav>`;
 };
 // Metro grid shown on a flagship-trade industry page, linking its {trade}-in-{metro} children.
-const cityGrid = (kids) => `<section class="wl-sec"><div class="wl-prose"><h2>By metro</h2></div>`
-  + `<div class="wl-hubgrid">${kids.map(([h, t]) => `<a class="wl-hubcard" href="${h}"><b>${t}</b></a>`).join('')}</div></section>`;
-
+const cityGrid = (kids) => `<section class="wl-sec">${D.head('By metro', '')}${D.excl(kids.map(([h, t]) => ({ href: h, title: t })), { iconName: 'pin' })}</section>`;
 // Comparison hub card grid (with per-competitor blurb) and vs-page body (table + prose).
-const compareHubGrid = () => `<section class="wl-sec"><div class="wl-hubgrid">${(COMPARE?.hub.items || []).map(it =>
-  `<a class="wl-hubcard" href="${it.slug}"><b>vs ${it.name}</b><span>${it.blurb}</span></a>`).join('')}</div></section>`;
+const compareHubGrid = () => `<section class="wl-sec">${D.excl((COMPARE?.hub.items || []).map(it => ({ href: it.slug, title: 'vs ' + it.name, desc: it.blurb, more: 'Compare' })), { iconName: 'reports' })}</section>`;
 const compareBody = (cp) => {
-  const table = `<section class="wl-sec"><div class="wl-cmp-wrap"><table class="wl-cmp">`
+  const table = `<section class="wl-sec"><div class="wl-cmp-wrap wl-glow"><table class="wl-cmp">`
     + `<thead><tr><th></th><th>Eagle Eye</th><th>${cp.competitor}</th></tr></thead><tbody>`
     + cp.table.map(([d, a, b]) => `<tr><th>${d}</th><td>${a}</td><td>${b}</td></tr>`).join('')
     + `</tbody></table><p class="wl-cmp-note">${cp.competitor} details as published on their own site, November 2026 — check their current plan before quoting.</p></div></section>`;
@@ -1058,38 +941,75 @@ const compareBody = (cp) => {
 // capability already asserted on a cluster page; cards link down into the hierarchy. The hero,
 // intro, numbers, FAQ and final CTA that James approved are untouched — this only adds between.
 const HOMEEXTRA = () => [
-  `<section class="wl-sec"><div class="wl-prose"><h2>From invisible to undeniable, in three moves</h2>`
-  + `<p>Local SEO is abstract until a client sees it on a map. Eagle Eye makes the whole job visible — the gap, the lift, and the win — so the work sells itself.</p></div>`
-  + `<div class="wl-hubgrid">`
-  + `<a class="wl-hubcard" href="/how-it-works/"><b>1 · Find the gap</b><span>One scan shows every block where a business is invisible — and who is taking those customers instead.</span></a>`
-  + `<a class="wl-hubcard" href="/tracking/scheduled/"><b>2 · Prove the lift</b><span>Put the scan on a schedule and watch Local Share of Voice climb, run after run.</span></a>`
-  + `<a class="wl-hubcard" href="/learn/branded-reports/"><b>3 · Report the win</b><span>Hand over a branded PDF with your name on it and the map that proves the result.</span></a>`
-  + `</div></section>`,
-  `<section class="wl-sec"><div class="wl-prose"><h2>Everything one scan gives you</h2></div>`
-  + `<div class="wl-hubgrid">`
-  + `<a class="wl-hubcard" href="/features/"><b>Rank at every point</b><span>A real Google and Apple Maps search from up to 441 points across the whole area.</span></a>`
-  + `<a class="wl-hubcard" href="/the-numbers/"><b>LSOV, ARP &amp; ATRP</b><span>Three numbers that turn a grid of pins into an answer a client remembers.</span></a>`
-  + `<a class="wl-hubcard" href="/tracking/competitor/"><b>Competitor map</b><span>Every rival that outranks you, named point by point across the grid.</span></a>`
-  + `<a class="wl-hubcard" href="/tracking/scheduled/"><b>Scheduled scans</b><span>Set a rhythm and the trend builds itself — nobody has to remember to run it.</span></a>`
-  + `<a class="wl-hubcard" href="/learn/branded-reports/"><b>Branded reports</b><span>White-label PDF and CSV with your logo, ready to send.</span></a>`
-  + `<a class="wl-hubcard" href="/tracking/google-and-apple-maps/"><b>Google + Apple</b><span>Both maps, same grid, same price — the Apple surface most tools ignore.</span></a>`
-  + `</div></section>`,
+  `<section class="wl-sec wl-how">${D.eyebrow('How it works')}${D.head('From invisible to undeniable, in three moves',
+    'Local SEO is abstract until a client sees it on a map. Eagle Eye makes the whole job visible — the gap, the lift, and the win — so the work sells itself.')}`
+  + D.steps([
+    { stage: 'Find the gap', art: 'heat', href: '/how-it-works/', more: 'How it works', text: 'One scan shows every block where a business is invisible — and who is taking those customers instead.' },
+    { stage: 'Prove the lift', art: 'proof', href: '/tracking/scheduled/', more: 'Scheduled scans', text: 'Put the scan on a schedule and watch Local Share of Voice climb, run after run.' },
+    { stage: 'Report the win', art: 'report', href: '/learn/branded-reports/', more: 'Branded reports', text: 'Hand over a branded PDF with your name on it and the map that proves the result.' },
+  ]) + `</section>`,
+  D.showcase('Everything one scan gives you', [
+    { title: 'Rank at every point', href: '/features/', art: 'grid', desc: 'A real Google and Apple Maps search from up to 441 points across the whole area.' },
+    { title: 'LSOV, ARP &amp; ATRP', href: '/the-numbers/', art: 'gauge', desc: 'Three numbers that turn a grid of pins into an answer a client remembers.' },
+    { title: 'Competitor map', href: '/tracking/competitor/', art: 'comp', desc: 'Every rival that outranks you, named point by point across the grid.' },
+    { title: 'Scheduled scans', href: '/tracking/scheduled/', art: 'cal', desc: 'Set a rhythm and the trend builds itself — nobody has to remember to run it.' },
+    { title: 'Branded reports', href: '/learn/branded-reports/', art: 'pdf', desc: 'White-label PDF and CSV with your logo, ready to send.' },
+    { title: 'Google + Apple', href: '/tracking/google-and-apple-maps/', art: 'maps', desc: 'Both maps, same grid, same price — the Apple surface most tools ignore.' },
+  ]),
   `<section class="wl-sec"><div class="wl-prose"><h2>Data a rank checker never shows you</h2>`
   + `<p>Every rival's map, open-or-closed point by point, review counts moving between scans, the full top 20 everywhere — up to 8,820 listings from a single 21 × 21 scan. <a href="/data-never-on-the-market/">See the six things only a geo-grid records →</a></p></div></section>`,
-  `<section class="wl-sec"><div class="wl-prose"><h2>Built for the people who have to prove it</h2></div>`
-  + `<div class="wl-hubgrid">`
-  + `<a class="wl-hubcard" href="/solutions/agencies/"><b>Agencies</b><span>Show every client where they rank — and exactly what your work moved.</span></a>`
-  + `<a class="wl-hubcard" href="/solutions/multi-location/"><b>Multi-location brands</b><span>One grid per location, every market on the same dashboard.</span></a>`
-  + `<a class="wl-hubcard" href="/industries/"><b>28 local industries</b><span>From plumbers to med spas — the map pack is where the calls start.</span></a>`
-  + `</div></section>`,
+  `<section class="wl-sec">${D.eyebrow('Who it is for')}${D.head('Built for the people who have to prove it', '')}`
+  + D.wins([
+    { icon: 'members', title: 'Agencies', href: '/solutions/agencies/', desc: 'Show every client where they rank — and exactly what your work moved.' },
+    { icon: 'pin', title: 'Multi-location brands', href: '/solutions/multi-location/', desc: 'One grid per location, every market on the same dashboard.' },
+    { icon: 'org', title: '28 local industries', href: '/industries/', desc: 'From plumbers to med spas — the map pack is where the calls start.' },
+  ]) + `</section>`,
   `<section class="wl-sec"><div class="wl-prose"><h2>Why teams move to Eagle Eye</h2>`
   + `<p>Most geo-grid tools stop at Google and reset your credits every month. Eagle Eye grids <b>Google and Apple at the same price</b>, your <b>credits never expire</b>, and your <b>first scan is free</b> — no card. See it next to the tool you run now.</p>`
   + `<p><a class="wl-btn" href="/compare/">Compare Eagle Eye to Local Falcon, BrightLocal &amp; more →</a></p></div></section>`,
 ];
+// The eyebrow over a page's prose sections: its pillar, or nothing on a top-level page.
+// One Blender model per page, no two pages alike (tools/blender/make_objects.py OBJECTS): a trade's
+// shop carries that trade's emblem, a trade-in-metro page adds the metro's landmark, every other
+// page has its own. The build stops if two pages would share a model.
+const OBJBYSLUG = {
+  '/how-it-works/': 'stairs', '/features/': 'featureset', '/the-numbers/': 'gauge', '/data-never-on-the-market/': 'vault',
+  '/apple-maps-rank-tracking/': 'maptile-apple', '/google-maps-rank-tracking/': 'maptile-google', '/pricing/': 'coins', '/faq/': 'bubble',
+  '/solutions/': 'signpost', '/solutions/agencies/': 'agency', '/solutions/multi-location/': 'multiloc',
+  '/tracking/': 'radar', '/tracking/local-pack/': 'localpack', '/tracking/google-business-profile/': 'profilecard', '/tracking/near-me/': 'phone',
+  '/tracking/competitor/': 'podium', '/tracking/scheduled/': 'calendar', '/tracking/time-lapse/': 'film', '/tracking/google-and-apple-maps/': 'twomaps',
+  '/learn/': 'book', '/learn/glossary/': 'glossary', '/learn/what-is-geo-grid/': 'scangrid', '/learn/grid-sizes/': 'gridsizes',
+  '/learn/geo-grid-vs-keyword/': 'pinvsgrid', '/learn/share-of-local-voice/': 'pie', '/learn/branded-reports/': 'report',
+  '/learn/reporting-guide/': 'clipboard', '/learn/api/': 'api',
+  '/industries/': 'storefront',
+  '/compare/': 'scales', '/compare/eagle-eye-vs-brightlocal/': 'scales-stack', '/compare/eagle-eye-vs-whitespark/': 'scales-tile',
+  '/compare/eagle-eye-vs-localviking/': 'scales-shield', '/compare/eagle-eye-vs-gridmybusiness/': 'scales-grid',
+  '/free-tools/': 'toolbox', '/free-tools/geo-grid-checker/': 'magnifier', '/free-tools/scan-cost-calculator/': 'calculator',
+};
+const OBJFOR = (p) => {
+  if (p.home) return null;
+  if (OBJBYSLUG[p.slug]) return OBJBYSLUG[p.slug];
+  let m = p.slug.match(/^\/industries\/([^/]+)\/([^/]+)\/$/);
+  if (m) return `city-${m[1]}-${m[2]}`;
+  m = p.slug.match(/^\/industries\/([^/]+)\/$/) || p.slug.match(/^\/local-seo-for-([^/]+)\/$/);
+  if (m) return `shop-${m[1]}`;
+  throw new Error(`${p.slug}: no hero model assigned (build.mjs OBJBYSLUG)`);
+};
+const OBJSEEN = new Map();
+// How each of the four stages of a page's object arrives in its story (the shader's effects:
+// 0 dropped in, 1 risen up, 2 scaled up, 3 spun in, 4 swept in sideways, 6 radial reveal),
+// varied by page so no two neighbouring pages build the same way.
+const FXSETS = ['6,2,3,0', '2,0,3,4', '6,1,2,3', '4,3,0,2', '2,3,1,0', '6,4,2,1'];
+// the import map's URLs are page-relative (the site is served under a sub-path on Pages)
+const IMPORTBASE = (p) => p.slug === '/' ? './' : '../'.repeat(p.slug.split('/').filter(Boolean).length);
+const SEEDOF = (p) => [...p.slug].reduce((a, ch) => (a * 33 + ch.charCodeAt(0)) >>> 0, 5381) % 997;
+const FXFOR = (p) => FXSETS[[...p.slug].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % FXSETS.length];
+const PROSELABEL = (p) => { const seg = p.slug.split('/').filter(Boolean)[0]; return HUBLABEL[seg] && p.slug !== '/' + seg + '/' ? HUBLABEL[seg] : ''; };
 const PAGE = async (p) => {
   const c = { ...(CONTENT[p.ckey] || {}) };
   if (!c.faq && FAQS[p.ckey]) c.faq = FAQS[p.ckey];
   const bodySecs = [];
+  if (p.home) bodySecs.push(D.demo(APP));
   if (p.hub) bodySecs.push(hubGrid(p.hub));
   if (p.comparehub) bodySecs.push(compareHubGrid());
   if (p.compare) { if (p.compare.faq) c.faq = p.compare.faq; bodySecs.push(compareBody(p.compare)); }
@@ -1097,13 +1017,23 @@ const PAGE = async (p) => {
   if (CITYCHILDREN[p.slug]) bodySecs.push(cityGrid(CITYCHILDREN[p.slug]));
   if (c.introHtml) bodySecs.push(c.introHtml);
   if (p.home) for (const s of HOMEEXTRA()) bodySecs.push(s);
-  for (const s of p.sections) bodySecs.push(rewrite(await readFrag(`sec-${s}.html`)));
+  for (const s of p.sections) bodySecs.push(D.WELCOME_SECTIONS[s] ? D.WELCOME_SECTIONS[s](PLANS) : rewrite(await readFrag(`sec-${s}.html`)));
   if (c.afterHtml) bodySecs.push(c.afterHtml);
   // Numbers reinforcement on every page except the one that already is the numbers page.
   if (p.slug !== '/the-numbers/') bodySecs.push(numbersSection());
   if (c.faq) bodySecs.push(faqSection(c.faq));
-  if (!p.home) bodySecs.push(ctaBand());
+  // (the closing call is set after the body band, as .wl-final — see the template)
   const ld = jsonLd(p, c);
+  const obj = OBJFOR(p);
+  if (obj) { if (OBJSEEN.has(obj)) throw new Error(`${p.slug} and ${OBJSEEN.get(obj)} would share the model ${obj}`); OBJSEEN.set(obj, p.slug); }
+  if (obj && !existsSync(join(ROOT, 'src/app/obj', obj + '.eeq'))) throw new Error(`hero object ${obj}.eeq missing — run tools/blender/make_objects.py`);
+  // The scroll story's chapters, from this page's own copy (design.mjs chaptersFrom).
+  // A hub's story walks through its first child pages, each with that page's own lede.
+  const kids = p.hub ? (HUBSETS[p.hub] || []).map(([h, t]) => { const q = PAGES.find(x => x.slug === RM(h) || x.ckey === h); return [t, q ? q.lede : '']; })
+    : p.slug === '/free-tools/' ? FREETOOLS.filter(x => x.slug !== '/free-tools/').map(x => [x.h1, x.lede]) : [];
+  const story = obj ? D.chaptersFrom(bodySecs.join('\n'), c.faq || [], kids) : null;
+  if (process.env.EE_DEBUG && p.slug === process.env.EE_DEBUG) console.log(bodySecs.join('\n').slice(0, 1200), story);
+  if (obj && story.length < 3) throw new Error(`${p.slug}: only ${story.length} chapters found for its story`);
   const head = `<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${p.title}</title>
@@ -1116,32 +1046,37 @@ const PAGE = async (p) => {
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${p.title}">
 <meta name="twitter:description" content="${p.desc}"><meta name="twitter:image" content="${OGIMG}">
 <link rel="icon" href="/app/logo.svg" type="image/svg+xml">
-<style>${PLAINCSS}</style>
+${ASSETS_HEAD()}
+${obj ? `<script type="importmap">{"imports":{"three":"${IMPORTBASE(p)}app/vendor/three/three.module.js","three/addons/":"${IMPORTBASE(p)}app/vendor/three/addons/"}}</script>
+<link rel="preload" href="/app/obj/${obj}.eeq" as="fetch" type="application/octet-stream" crossorigin="anonymous">
+<script src="/app/wl-obj.js?v=${ASSETVER}" defer></script>` : ''}
 ${ld.map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join('\n')}
 </head><body>
+<div class="wl wl-anim wl-site" data-app="${APP}"${p.home ? ' data-xp' : ''}>
 ${NAV(p.slug)}
-<div class="wl">
 <main>
-${CRUMB(p)}
-<section class="wl-hero${p.home ? '' : ' wl-hero-sm'}">
+${story ? D.fxStory({ obj, label: PROSELABEL(p) || HUBLABEL[p.slug.split('/').filter(Boolean)[0]] || '', h1: p.h1, lede: p.lede, crumb: CRUMB(p), chapters: story, fx: FXFOR(p), seed: SEEDOF(p), v: ASSETVER,
+  ctas: `<div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a></div>` }) : `<section class="wl-hero${p.home ? '' : ' wl-hero-sub'}">
   <div class="wl-hero-copy">
+    ${p.home ? `<div class="wl-maps"><span class="on"><i></i>Google Maps</span><span class="on"><i></i>Apple Maps</span></div>` : CRUMB(p)}
     ${p.home
       ? `<h1><span class="wl-line">Every street has a #1.</span><span class="wl-line wl-line-hot">Make it you.</span></h1>`
-      : `<h1>${p.h1}</h1>`}
+      : `<h1><span class="wl-line">${p.h1}</span></h1>`}
     <p class="wl-lede">${p.lede}</p>
     ${p.home ? `<div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a><a class="wl-btn ghost big" href="${APP}/login">Sign in</a></div>
     <p class="wl-note">No card needed. Your first scan of your own website is free at any size.</p>` :
     `<div class="wl-ctas"><a class="wl-btn big" href="${APP}/signup">Start with 10 free scans</a></div>`}
   </div>
-</section>
+  ${p.home ? `<div class="wl-scroll" aria-hidden="true"><i></i></div>` : ''}
+</section>`}
 <div class="wl-body">
-${bodySecs.join('\n')}
+${(D.resetProse(), D.transformProse(bodySecs.join('\n'), PROSELABEL(p)))}
 ${RELATED(p.slug)}
 </div>
-${p.home ? FINAL() : ''}
+${p.home ? FINAL() : ctaBand()}
 </main>
-</div>
 ${FOOT()}
+</div>
 ${p.script || ''}
 </body></html>`;
   return localize(head, p.slug);
@@ -1227,12 +1162,46 @@ const deCssRed = (css) => {
     });
   return css;
 };
-for (const f of ['dashboard.css', 'pages.css', 'theme.js', 'logo.svg', 'eagle.svg', 'sgen-logo.png', 'og-eagleeye.png'])
+for (const f of ['dashboard.css', 'site.css', 'site.js', 'wl-obj.js', 'world.js', 'logo.svg', 'eagle.svg', 'sgen-logo.png', 'og-eagleeye.png', 'city.bin', 'emblem.bin', 'pin.bin', 'person.bin'])
   if (existsSync(join(ROOT, 'src/app', f))) {
     // Original design preserved verbatim — copy CSS/SVG as-is (no recolour). The only
     // change in this reforge is copy/content, not the brand design (Jerome, 2026-11-19).
     await cp(join(ROOT, 'src/app', f), join(DIST, 'app', f));
   }
+
+// The city backdrop (wl-bg.js) is the app's code verbatim, which fetches its models from the
+// root-absolute /app/. These pages are also served under a sub-path (GitHub Pages), so the
+// dist copy resolves those few asset URLs from the script's own folder (ABASE) instead.
+{
+  const bg = readFileSync(join(ROOT, 'src/app/wl-bg.js'), 'utf8')
+    .replace(/"\/app\/(logo\.svg|sgen-logo\.png|emblem\.bin|pin\.bin|person\.bin|city\.bin)"/g, '(ABASE + "$1")')
+    // The scan story's last chapter has two buttons: sign-up goes to the real app, and its
+    // "How it works" (an in-page #how jump on the welcome page) opens this site's page.
+    .replace('h("a", { class: "wl-btn", href: "/app/signup" }', `h("a", { class: "wl-btn", href: "${APP}/signup" }`)
+    .replace('h("a", { class: "wl-btn ghost", href: "#how", onclick: wlJump }', 'h("a", { class: "wl-btn ghost", href: ABASE + "../how-it-works/" }')
+    // the city can be paused while a page's world covers it (world.js sets canvas.__paused)
+    .replace('if (still || raf || document.hidden) return;', 'if (still || raf || document.hidden || canvas.__paused) return;')
+    .replace('const onVis = () => schedule();', 'const onVis = () => schedule(); canvas.__resume = schedule;');
+  if (/"\/app\/[^"]+\.(bin|svg|png)"/.test(bg)) throw new Error('wl-bg.js: an /app/ asset URL was left root-absolute');
+  if (bg.includes('href: "/app/signup"') || bg.includes('href: "#how"')) throw new Error('wl-bg.js: scan-story links not rewritten');
+  if (!bg.includes('canvas.__paused') || !bg.includes('canvas.__resume = schedule')) throw new Error('wl-bg.js: city pause hook not applied');
+  await writeFile(join(DIST, 'app', 'wl-bg.js'), bg, 'utf8');
+}
+// SYNTAX GATE: every shipped script is parsed before it is copied, so a broken edit fails the
+// build instead of silently dropping a page to its fallback in the browser.
+{
+  const { execFileSync } = await import('node:child_process');
+  const { tmpdir } = await import('node:os');
+  for (const [f, ext] of [['world.js', '.mjs'], ['wl-obj.js', '.cjs'], ['site.js', '.cjs'], ['wl-bg.js', '.cjs']]) {
+    const tmp = join(tmpdir(), 'ee-check-' + f.replace(/.js$/, '') + ext);
+    await writeFile(tmp, readFileSync(join(ROOT, 'src/app', f), 'utf8'));
+    try { execFileSync(process.execPath, ['--check', tmp], { stdio: 'pipe' }); }
+    catch (e) { throw new Error('src/app/' + f + ' does not parse: ' + String(e.stderr || e.message)); }
+  }
+}
+// The hero objects (Blender, tools/blender/make_objects.py), and three.js for their worlds.
+await cp(join(ROOT, 'src/app/obj'), join(DIST, 'app', 'obj'), { recursive: true });
+await cp(join(ROOT, 'src/app/vendor/three'), join(DIST, 'app', 'vendor', 'three'), { recursive: true });
 
 let count = 0;
 for (const p of PAGES) {
@@ -1274,15 +1243,21 @@ const page404 = `<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Page not found — Eagle Eye</title><meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/app/logo.svg" type="image/svg+xml">
-<style>${PLAINCSS}</style></head><body>
+${FONTS}
+<script>(function(){var b=/github\\.io$/.test(location.hostname)?'/'+location.pathname.split('/')[1]+'/':'/',v='${ASSETVER}';
+document.write('<link rel="stylesheet" href="'+b+'app/dashboard.css?v='+v+'"><link rel="stylesheet" href="'+b+'app/site.css?v='+v+'">'
++'<script src="'+b+'app/wl-bg.js?v='+v+'" defer><\\/script><script src="'+b+'app/site.js?v='+v+'" defer><\\/script>');})();</script>
+</head><body>
+<div class="wl wl-anim wl-site">
 ${NAV('/404')}
-<div class="wl"><main><section class="wl-hero"><div class="wl-hero-copy">
-<h1>That page isn’t here</h1>
+<main><section class="wl-hero wl-hero-sub"><div class="wl-hero-copy">
+<h1><span class="wl-line">That page isn’t here</span></h1>
 <p class="wl-lede">The link may be old or mistyped. Try the pages below, or head back to the start.</p>
 <div class="wl-ctas"><a class="wl-btn big" href="/">Back to home</a></div>
 </div></section>
-<div class="wl-body">${RELATED('/404')}</div></main></div>
+<div class="wl-body">${RELATED('/404')}</div></main>
 ${FOOT()}
+</div>
 </body></html>`;
 await writeFile(join(DIST, '404.html'),
   page404.replace(/\b(href|src)="\/(?!\/)([^"]*)"/g, (_m, attr, rest) => `${attr}="${ORIGIN}/${rest}"`),
@@ -1290,4 +1265,23 @@ await writeFile(join(DIST, '404.html'),
 // GitHub Pages serves raw files only when Jekyll is disabled — the build rm's dist each run,
 // so re-write .nojekyll every build (otherwise underscore/paths get Jekyll-processed).
 await writeFile(join(DIST, '.nojekyll'), '', 'utf8');
+// SPEED IS RANKING: the shipped dashboard.css keeps only the rules these pages can use (it is the
+// whole app's stylesheet, and it blocks the first paint). tools/prune-css.mjs says how it decides.
+{
+  const { pruneCss, usedTokens } = await import('./tools/prune-css.mjs');
+  const { readdirSync } = await import('node:fs');
+  const htmls = [];
+  (function walk(d) { for (const f of readdirSync(d, { withFileTypes: true })) { const p = join(d, f.name); if (f.isDirectory()) walk(p); else if (f.name.endsWith('.html')) htmls.push(readFileSync(p, 'utf8')); } })(DIST);
+  const scripts = ['site.js', 'wl-bg.js', 'wl-obj.js', 'world.js'].map(f => readFileSync(join(DIST, 'app', f), 'utf8'));
+  const full = readFileSync(join(ROOT, 'src/app/dashboard.css'), 'utf8');
+  const { css, kept, dropped } = pruneCss(full, usedTokens(htmls, scripts));
+  await writeFile(join(DIST, 'app', 'dashboard.css'), css, 'utf8');
+  console.log(`dashboard.css: ${Math.round(full.length / 1024)} KB -> ${Math.round(css.length / 1024)} KB (${kept} rules kept, ${dropped} not used by these pages)`);
+}
 console.log(`built ${count} pages + sitemap + robots + .nojekyll -> dist/`);
+// SEO GATE: the build fails if any page breaks the SEO audit (tools/seo-audit.mjs).
+{
+  const { execFileSync } = await import('node:child_process');
+  try { console.log(execFileSync(process.execPath, [join(ROOT, 'tools/seo-audit.mjs'), DIST], { encoding: 'utf8' }).trim()); }
+  catch (e) { console.error(String(e.stdout || '') + String(e.stderr || '')); throw new Error('SEO audit failed — see above'); }
+}

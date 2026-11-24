@@ -1,0 +1,359 @@
+/* site.css — the marketing site's layer on top of the app's own dashboard.css.
+   dashboard.css is copied verbatim from the Eagle Eye app (eagleeyes/ui/app/dashboard.css)
+   and carries the welcome page's whole design: the .wl tokens, header, hero, buttons,
+   cards (.wl-glow), FAQ, footer and the city backdrop. This file only styles the pieces
+   the content pages have and the welcome page does not (dropdown pillars, prose sections,
+   hub cards, comparison tables, breadcrumbs, the tool calculator), using the same tokens.
+   Everything is scoped under .wl-site so the app's own rules stay untouched. */
+
+.wl-site { --w-col:1180px; font-family:var(--sans); }
+
+/* ---------- header: the welcome bar, with one dropdown per pillar ---------- */
+.wl-site .wl-links { gap:24px; align-items:center; }
+.wl-site .wl-links > a, .wl-site .wl-drop-btn { white-space:nowrap; }
+.wl-site .wl-links > a[aria-current="page"] { color:var(--w-ink); }
+.wl-site .wl-drop-btn { color:inherit !important; }
+/* The dropdown caret: a plain chevron. dashboard.css also has an older .wl-caret (a blinking red
+   text cursor, for typed captions) that fills this one red and blinks it; that is undone here. */
+.wl-site .wl-nav .wl-caret { display:inline-block; width:7px; height:7px; margin:0 0 0 2px; padding:0; background:none; animation:none;
+  border:0; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; border-radius:0 0 1px 0;
+  transform:translateY(-2px) rotate(45deg); transition:transform .2s; opacity:.75; vertical-align:middle; }
+.wl-site .wl-links .wl-drop-wrap { display:inline-flex; align-items:center; gap:4px; }
+.wl-site .wl-drop-tog { display:inline-grid; place-items:center; width:18px; height:24px; }
+.wl-site .wl-drop-wrap:hover .wl-caret, .wl-site .wl-drop-wrap.open .wl-caret { opacity:1; }
+.wl-site .wl-drop-btn::after { display:none; }
+.wl-site .wl-drop-wrap.open .wl-drop-btn { color:var(--w-ink) !important; }
+.wl-site .wl-drop-wrap.open .wl-caret { transform:translateY(1px) rotate(-135deg); }
+.wl-site .wl-drop-wrap.open .wl-drop { opacity:1; visibility:visible; transform:none; transition:opacity .18s, transform .18s; }
+/* a bridge over the gap between the label and the panel, so hover does not drop out */
+.wl-site .wl-drop::before { content:""; position:absolute; left:0; right:0; top:-20px; height:20px; }
+.wl-site .wl-drop.r { left:auto; right:-24px; }
+.wl-site .wl-drop.sm { width:380px; }
+.wl-site .wl-drop.sm .wl-drop-grid { grid-template-columns:1fr; }
+.wl-site .wl-drop.wide { width:680px; }
+.wl-site .wl-drop.wide .wl-drop-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+.wl-site .wl-drop.wide .wl-fl { padding:7px 12px; font-size:13.5px; }
+.wl-site .wl-drop .wl-links-h, .wl-site .wl-drop-h { grid-column:1 / -1; padding:10px 12px 4px; font:600 11px var(--mono, monospace);
+  letter-spacing:.12em; text-transform:uppercase; color:var(--w-ink-3); }
+.wl-site .wl-drop a::after { display:none; }
+@media (hover: hover) and (pointer: fine) {
+  .wl-site .wl-drop-wrap:hover .wl-drop { opacity:1; visibility:visible; transform:none; transition:opacity .18s, transform .18s; }
+  .wl-site .wl-drop-wrap:hover .wl-drop-btn { color:var(--w-ink) !important; }
+}
+@media (max-width: 1100px) { .wl-site .wl-links { gap:18px; font-size:14px; } .wl-site .wl-acts { margin-left:18px; } }
+@media (max-width: 960px) {
+  .wl-site .wl-links { display:none; }
+  .wl-site .wl-acts { margin-left:auto; }
+  .wl-site .wl-menu details { border-top:1px solid var(--w-line); }
+  .wl-site .wl-menu summary { display:flex; align-items:center; justify-content:space-between; padding:13px 4px; font-size:17px; font-weight:600;
+    cursor:pointer; list-style:none; color:var(--w-ink); }
+  .wl-site .wl-menu summary::-webkit-details-marker { display:none; }
+  .wl-site .wl-menu summary .wl-caret { margin-right:6px; }
+  .wl-site .wl-menu details[open] summary .wl-caret { transform:translateY(1px) rotate(-135deg); }
+  .wl-site .wl-menu details a { display:block; padding:9px 4px 9px 14px; font-size:15px; font-weight:500; border-top:0; color:var(--w-ink-2); }
+  .wl-site .wl-menu details a.all { color:#FF6B6E; font-weight:700; }
+}
+
+/* ---------- hero on the inner pages: the welcome hero, shorter ---------- */
+.wl-site .wl-hero.wl-hero-sub { min-height:78vh; min-height:78svh; padding-top:calc(78px + 12vh); padding-bottom:90px; }
+.wl-site .wl-hero-sub h1 { font-size:clamp(2.1rem, 4.4vw, 3.9rem); max-width:18ch; }
+.wl-site .wl-hero-sub .wl-lede { max-width:52ch; }
+/* the hero object (wl-obj.js): the copy on the left, the page's Blender object on the right,
+   standing in the welcome feature pages' lit stage (.ft-stage) */
+.wl-site .wl-hero-obj { display:grid; grid-template-columns:minmax(0, 1.08fr) minmax(0, .92fr); align-items:center; gap:24px; }
+.wl-site .wl-hero-obj .wl-obj-stage { order:2; width:100%; max-width:560px; justify-self:end; }
+.wl-site .wl-obj-stage::before { transition:opacity .8s; opacity:.35; }
+.wl-site .wl-obj-stage.lit::before { opacity:1; }
+.wl-site .wl-obj-stage .ft-gl { transition:opacity .9s; }
+@media (max-width: 960px) {
+  .wl-site .wl-hero-obj { grid-template-columns:minmax(0, 1fr); gap:0; }
+  .wl-site .wl-hero-obj .wl-obj-stage { order:-1; max-width:340px; justify-self:center; margin:-10px auto -18px; }
+}
+@media (max-width: 560px) { .wl-site .wl-hero-obj .wl-obj-stage { max-width:270px; } }
+.wl-site .wl-crumb { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:0 0 22px; font-size:14px; color:var(--w-ink-3); }
+.wl-site .wl-crumb a { color:var(--w-ink-2); } .wl-site .wl-crumb a:hover { color:#fff; }
+.wl-site .wl-crumb span { color:var(--w-ink-3); }
+.wl-site .wl-hero .wl-eyebrow { margin-bottom:22px; }
+
+/* ---------- body sections ---------- */
+/* The welcome page's body band lets the city show through behind cards; these pages carry
+   long prose too, so the band is a little denser to keep paragraphs readable over it. */
+.wl-site .wl-body { padding-bottom:140px;
+  background:linear-gradient(180deg, transparent 0, rgba(5,3,4,.78) 300px, rgba(5,3,4,.84) 50%, rgba(5,3,4,.78) calc(100% - 300px), transparent 100%); }
+.wl-site .wl-sec { padding-top:96px; }
+.wl-site .wl-body > .wl-sec:first-child { padding-top:40px; }
+.wl-site .wl-head h2 { max-width:18ch; }
+
+/* long-form prose: the feature pages' type (.ft-sec) on a readable measure */
+.wl-site .wl-prose { max-width:780px; }
+.wl-site .wl-prose h2 { font-size:clamp(1.7rem, 3vw, 2.5rem); margin:0 0 22px; }
+.wl-site .wl-prose h3 { font-size:20px; margin:34px 0 10px; }
+.wl-site .wl-prose p { margin:0 0 16px; color:var(--w-ink-2); font-size:17px; line-height:1.7; }
+.wl-site .wl-prose b, .wl-site .wl-prose strong { color:var(--w-ink); font-weight:700; }
+.wl-site .wl-prose a:not(.wl-btn) { color:#FF6B6E; text-decoration:underline; text-decoration-color:rgba(255,107,110,.4); text-underline-offset:3px; }
+.wl-site .wl-prose a:not(.wl-btn):hover { color:#fff; text-decoration-color:#fff; }
+.wl-site .wl-prose ul, .wl-site .wl-prose ol { margin:0 0 18px; padding:0; list-style:none; display:grid; gap:10px; }
+.wl-site .wl-prose ul > li { position:relative; padding-left:22px; color:var(--w-ink-2); font-size:16.5px; line-height:1.65; }
+.wl-site .wl-prose ul > li::before { content:""; position:absolute; left:2px; top:.62em; width:8px; height:8px; border-radius:50%;
+  background:var(--w-red); box-shadow:0 0 10px var(--w-red); }
+.wl-site .wl-prose ol { counter-reset:wl-ol; }
+.wl-site .wl-prose ol > li { position:relative; padding-left:38px; color:var(--w-ink-2); font-size:16.5px; line-height:1.65; counter-increment:wl-ol; }
+.wl-site .wl-prose ol > li::before { content:counter(wl-ol); position:absolute; left:0; top:.1em; display:grid; place-items:center; width:26px; height:26px;
+  border-radius:8px; font-size:13px; font-weight:800; color:#fff; background:linear-gradient(180deg, #FF2A2E, #8E1114); }
+.wl-site .wl-k { color:#FF6B6E !important; }
+.wl-site .wl-prose table { width:100%; border-collapse:collapse; margin:10px 0 22px; font-size:15px; }
+.wl-site .wl-prose th, .wl-site .wl-prose td { text-align:left; padding:12px 14px; border-bottom:1px solid var(--w-line); color:var(--w-ink-2); vertical-align:top; }
+.wl-site .wl-prose thead th { font:600 11px var(--mono, monospace); letter-spacing:.1em; text-transform:uppercase; color:var(--w-ink-3); }
+.wl-site .wl-prose .wl-btn { margin-top:8px; }
+
+/* hub / card grids: the welcome page's cards (.wl-excl li) */
+.wl-site .wl-hubgrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:14px; margin-top:8px; }
+.wl-site .wl-prose + .wl-hubgrid { margin-top:30px; }
+.wl-site .wl-hubcard { position:relative; display:flex; flex-direction:column; gap:8px; padding:22px 22px 24px; border-radius:20px;
+  transition:transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s; }
+.wl-site .wl-hubcard:hover { transform:translateY(-3px); }
+.wl-site .wl-hubcard.wl-rv, .wl-site .wl-numcard.wl-rv { transition:opacity .8s cubic-bezier(.2,.8,.2,1), translate .9s cubic-bezier(.2,.8,.2,1), scale .9s cubic-bezier(.2,.8,.2,1),
+  rotate .9s cubic-bezier(.2,.8,.2,1), transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s;
+  transition-delay:calc(var(--i, 0) * 70ms), calc(var(--i, 0) * 70ms), calc(var(--i, 0) * 70ms), calc(var(--i, 0) * 70ms), 0s, 0s; }
+.wl-site .wl-hubcard b { font-size:16.5px; color:var(--w-ink); line-height:1.3; }
+.wl-site .wl-hubcard b::after { content:" →"; color:#FF6B6E; opacity:0; transition:opacity .2s; }
+.wl-site .wl-hubcard:hover b::after { opacity:1; }
+.wl-site .wl-hubcard span { font-size:14px; line-height:1.6; color:var(--w-ink-2); }
+
+/* ---------- the welcome page's components, as these pages use them ---------- */
+/* a card whose title is the link: the whole card is the target */
+.wl-site .wl-card-link { color:inherit; }
+.wl-site .wl-card-link::after { content:""; position:absolute; inset:0; z-index:3; border-radius:inherit; }
+.wl-site .wl-excl li, .wl-site .wl-wins li, .wl-site .hs-card { position:relative; }
+.wl-site .wl-excl li:has(.wl-card-link):hover, .wl-site .wl-wins li:has(.wl-card-link):hover { transform:translateY(-3px); }
+.wl-site .wl-excl li, .wl-site .wl-wins li { transition:transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s; }
+.wl-site .wl-excl li.wl-rv, .wl-site .wl-wins li.wl-rv { transition:opacity .8s cubic-bezier(.2,.8,.2,1), translate .9s cubic-bezier(.2,.8,.2,1), scale .9s cubic-bezier(.2,.8,.2,1),
+  rotate .9s cubic-bezier(.2,.8,.2,1), transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s;
+  transition-delay:calc(var(--i, 0) * 70ms), calc(var(--i, 0) * 70ms), calc(var(--i, 0) * 70ms), calc(var(--i, 0) * 70ms), 0s, 0s; }
+/* the card's "Open →" sits at its foot, as on the welcome page's New-features cards */
+.wl-site .wl-cards li:has(.wl-new-more) { padding-bottom:52px; }
+.wl-site .wl-cards .wl-new-more::after { display:none; }
+.wl-site .wl-cards li:hover .wl-new-more { color:#fff !important; }
+.wl-site .wl-excl-k svg { width:19px; height:19px; }
+.wl-site .wl-cards { grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); }
+.wl-site .wl-wins li { display:grid; grid-template-columns:auto minmax(0, 1fr); column-gap:14px; row-gap:4px; align-items:start; }
+.wl-site .wl-wins { margin-top:0; }
+.wl-site .wl-step .wl-new-more { position:relative; left:auto; bottom:auto; margin-top:16px; z-index:3; }
+.wl-site .wl-step .wl-new-more::after { display:none; }
+.wl-site .wl-step .wl-new-more:hover { color:#fff; }
+.wl-site .wl-step-n i { font-style:normal; margin-right:8px; }
+.wl-site .wl-how .wl-steps + .wl-wins { margin-top:16px; }
+.wl-site .hs-card .wl-card-link:hover { color:#FF6B6E; }
+.wl-site .wl-hs { margin-top:96px; }
+
+/* prose beside a lit picture panel, alternating sides (the welcome page's two-up rhythm) */
+.wl-site .wl-ptwo { display:grid; grid-template-columns:minmax(0, 1.35fr) minmax(0, 1fr); gap:48px; align-items:center; }
+.wl-site .wl-ptwo.flip { grid-template-columns:minmax(0, 1fr) minmax(0, 1.35fr); }
+.wl-site .wl-ptwo.flip > .wl-part { order:-1; }
+.wl-site .wl-ptwo .wl-prose { max-width:none; }
+.wl-site .wl-part { border-radius:24px; padding:14px; position:sticky; top:110px; }
+.wl-site .wl-part .hs-art { height:300px; }
+.wl-site .wl-psec > .wl-eyebrow { margin-bottom:22px; }
+
+/* the three numbers set as the welcome page's figure cards */
+.wl-site .wl-figs-3 { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+.wl-site .wl-figs-3 .wl-fig b { font-size:clamp(2.4rem, 4.4vw, 3.6rem); }
+.wl-site .wl-figs-3 .wl-fig:first-child b { color:var(--w-red); }
+.wl-site .wl-plan-static { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; color:var(--w-ink-2); }
+.wl-site .wl-plan-static b { display:block; color:#fff; }
+@media (max-width: 960px) {
+  .wl-site .wl-ptwo, .wl-site .wl-ptwo.flip { grid-template-columns:minmax(0, 1fr); gap:24px; }
+  .wl-site .wl-ptwo.flip > .wl-part { order:0; }
+  .wl-site .wl-part { position:static; }
+  .wl-site .wl-part .hs-art { height:220px; }
+  .wl-site .wl-figs-3 { grid-template-columns:minmax(0, 1fr); }
+}
+
+/* the three numbers: the welcome page's figure cards */
+.wl-site .wl-nums { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; }
+.wl-site .wl-numcard { display:flex; flex-direction:column; gap:6px; padding:26px 24px 28px; border-radius:20px; }
+.wl-site .wl-numcard b { font-size:clamp(2.2rem, 3.6vw, 3rem); font-weight:800; font-stretch:118%; letter-spacing:-.02em; line-height:1; color:#fff; }
+.wl-site .wl-numname { font:600 11px var(--mono, monospace); letter-spacing:.12em; text-transform:uppercase; color:#FF6B6E; margin-top:6px; }
+.wl-site .wl-numcard p { margin:8px 0 0; color:var(--w-ink-2); font-size:14.5px; line-height:1.6; }
+
+/* FAQ: the welcome page's two-column accordion — just give the answers' links the accent */
+.wl-site .wl-q p a { color:#FF6B6E; text-decoration:underline; text-underline-offset:3px; }
+
+/* explore row: pill links */
+.wl-site .wl-related .wl-head { margin-bottom:24px; }
+.wl-site .wl-related .wl-head h2 { font-size:clamp(1.5rem, 2.4vw, 2rem); }
+.wl-site .wl-related-list { list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:10px; }
+.wl-site .wl-related-list a { display:inline-flex; align-items:center; height:38px; padding:0 16px; border-radius:999px; font-size:14px;
+  color:var(--w-ink-2); background:rgba(255,255,255,.04); border:1px solid var(--w-line-2); transition:color .2s, border-color .2s, background .2s; }
+.wl-site .wl-related-list a:hover { color:#fff; border-color:rgba(255,42,46,.55); background:rgba(255,42,46,.1); }
+
+/* comparison table */
+.wl-site .wl-cmp-wrap { overflow-x:auto; border-radius:20px; padding:8px 8px 14px; }
+.wl-site .wl-cmp { width:100%; border-collapse:collapse; font-size:14.5px; }
+.wl-site .wl-cmp th, .wl-site .wl-cmp td { text-align:left; padding:14px 16px; border-bottom:1px solid var(--w-line); vertical-align:top; color:var(--w-ink-2); line-height:1.55; }
+.wl-site .wl-cmp thead th { font:600 11px var(--mono, monospace); letter-spacing:.1em; text-transform:uppercase; color:var(--w-ink-3); }
+.wl-site .wl-cmp thead th:nth-child(2) { color:#FF6B6E; }
+.wl-site .wl-cmp tbody th { color:var(--w-ink); font-weight:700; width:26%; }
+.wl-site .wl-cmp td:nth-child(2) { color:var(--w-ink); background:rgba(255,42,46,.06); }
+.wl-site .wl-cmp tbody tr:last-child > * { border-bottom:0; }
+.wl-site .wl-cmp-note { margin:12px 16px 0; font-size:12.5px; color:var(--w-ink-3); }
+
+/* free-tool credit calculator (renamed from .wl-calc, which is the welcome page's own calculator) */
+.wl-site .wl-tcalc { display:flex; flex-wrap:wrap; gap:18px 22px; align-items:flex-end; padding:26px; border-radius:22px; margin:18px 0; }
+.wl-site .wl-tcalc label { display:flex; flex-direction:column; gap:8px; font-size:13px; font-weight:600; color:var(--w-ink-3); }
+.wl-site .wl-tcalc select { height:42px; padding:0 14px; border-radius:12px; border:1px solid var(--w-line-2); background:rgba(255,255,255,.04); color:var(--w-ink); font-size:14.5px; }
+.wl-site .wl-tcalc select option { background:#120b0c; }
+.wl-site .wl-tcalc-out { width:100%; margin:6px 0 0 !important; font-size:18px !important; font-weight:700; color:#fff !important; }
+
+/* closing call (every inner page) */
+.wl-site .wl-final .wl-lede { max-width:56ch; }
+
+/* ---------- footer: the welcome footer, with the site's full columns ---------- */
+.wl-site .wl-foot { grid-template-columns:minmax(0, 1.7fr) repeat(5, minmax(0, 1fr)); gap:32px 28px; }
+.wl-site .wl-foot-brand .wl-btn { margin-top:22px; }
+.wl-site .wl-foot-brand small { display:block; margin-top:10px; color:var(--w-ink-3); font-size:12.5px; }
+.wl-site .wl-foot-col b a { color:inherit; }
+.wl-site .wl-foot-col a { font-size:13.5px; line-height:1.35; }
+.wl-site .wl-foot-wide { grid-column:1 / -1; padding-top:24px; border-top:1px solid var(--w-line); }
+.wl-site .wl-foot-wide > b { display:block; margin-bottom:10px; color:var(--w-ink); font-size:14px; }
+.wl-site .wl-foot-wide > b a { color:inherit; }
+.wl-site .wl-foot-ind { columns:5 150px; column-gap:28px; }
+.wl-site .wl-foot-ind a { display:block; padding:6px 0; font-size:13.5px; break-inside:avoid; transition:color .2s; }
+.wl-site .wl-foot-ind a:hover { color:#fff; }
+.wl-site .wl-copy a:hover { color:#fff; }
+@media (max-width: 1100px) { .wl-site .wl-foot { grid-template-columns:repeat(3, minmax(0, 1fr)); } .wl-site .wl-foot-brand { grid-column:1 / -1; } }
+@media (max-width: 960px) { .wl-site .wl-nums { grid-template-columns:minmax(0, 1fr); } }
+@media (max-width: 760px) {
+  .wl-site .wl-sec { padding-top:72px; }
+  .wl-site .wl-hero.wl-hero-sub { min-height:0; padding-top:calc(78px + 8vh); padding-bottom:56px; }
+  .wl-site .wl-head { grid-template-columns:minmax(0, 1fr); gap:16px; }
+  .wl-site .wl-foot { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .wl-site .wl-foot-ind { columns:2 130px; }
+  .wl-site .wl-prose p { font-size:16px; }
+}
+
+/* On a page with a hero object the city behind is dimmed a little more, so the object reads
+   first; the welcome page's scroll dimming (--dim, set by wlParallax) still adds on top. */
+.wl-site:has(.wl-hero-obj) .wl-shade { opacity:calc(.42 + var(--dim) * .45); }
+
+/* ---------- THE EXPERIENCE, cinema cut (wl-obj.js drives --lb and the cards) ---------- */
+/* letterbox: two bars that close in as the story starts (2.39:1 on a 16:9 screen is ~12vh each) */
+.wl-site .fx-lb { position:absolute; inset:0; pointer-events:none; z-index:6; }
+.wl-site .fx-lb::before, .wl-site .fx-lb::after { content:""; position:absolute; left:0; right:0; height:calc(var(--lb, 0) * 11vh); background:#000;
+  box-shadow:0 0 40px 10px rgba(0,0,0,.55); }
+.wl-site .fx-lb::before { top:0; } .wl-site .fx-lb::after { bottom:0; }
+/* vignette + film grain (a tiny tiled noise, stepped so it flickers like stock, not like video) */
+.wl-site .fx-vig { position:absolute; inset:0; pointer-events:none; z-index:5;
+  background:radial-gradient(120% 90% at 60% 50%, transparent 55%, rgba(0,0,0,.55) 100%); }
+.wl-site .fx-vig::after { content:""; position:absolute; inset:-50%; opacity:.07; mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation:fx-grain 1.2s steps(6) infinite; }
+@keyframes fx-grain { 0%{transform:translate(0,0)} 20%{transform:translate(-8%,5%)} 40%{transform:translate(6%,-7%)} 60%{transform:translate(-5%,-4%)} 80%{transform:translate(7%,6%)} 100%{transform:translate(0,0)} }
+/* scene counter, top left inside the bars */
+.wl-site .fx-scene { position:absolute; z-index:7; left:max(24px, calc((100vw - var(--w-col)) / 2 + 24px)); top:calc(var(--lb, 0) * 11vh + 84px);
+  font:600 11px var(--mono, monospace); letter-spacing:.18em; text-transform:uppercase; color:var(--w-ink-3); opacity:calc(var(--lb, 0)); transition:top .1s; }
+.wl-site .fx-scene b { color:#FF6B6E; font-weight:700; }
+/* skip the trailer */
+.wl-site .fx-skip { position:absolute; z-index:7; right:max(24px, calc((100vw - var(--w-col)) / 2 + 24px)); top:calc(var(--lb, 0) * 11vh + 76px);
+  display:inline-flex; align-items:center; gap:8px; height:34px; padding:0 14px; border-radius:999px; cursor:pointer;
+  font:600 12.5px var(--sans); color:var(--w-ink-2); background:rgba(10,6,7,.55); border:1px solid var(--w-line-2);
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); opacity:0; pointer-events:none; transition:opacity .4s, color .2s, border-color .2s; }
+.wl-site .fx-skip.on { opacity:1; pointer-events:auto; }
+.wl-site .fx-skip:hover { color:#fff; border-color:rgba(255,42,46,.6); }
+.wl-site .fx-skip i { font-style:normal; transition:transform .2s; } .wl-site .fx-skip:hover i { transform:translateX(3px); }
+/* the end card, centred low over the final crane shot */
+.wl-site .fx-end { position:absolute; z-index:7; left:0; right:0; bottom:12vh; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;
+  opacity:0; pointer-events:none; text-shadow:0 2px 24px rgba(0,0,0,.8); }
+.wl-site .fx-end small { font:600 11px var(--mono, monospace); letter-spacing:.2em; text-transform:uppercase; color:#FF6B6E; }
+.wl-site .fx-end b { font:800 clamp(1.6rem, 3.2vw, 2.6rem)/1.1 var(--sans); font-stretch:118%; color:#fff; letter-spacing:-.02em; }
+.wl-site .fx-end button { margin-top:10px; height:42px; padding:0 20px; border-radius:999px; border:0; cursor:pointer; background:var(--w-ink); color:#0A0707; font:650 14px var(--sans); }
+.wl-site .fx-end button i { font-style:normal; display:inline-block; animation:fx-bob 1.4s ease-in-out infinite; }
+@keyframes fx-bob { 50% { transform:translateY(3px); } }
+/* captions and the intro sit above the bars' shadow */
+.wl-site .fx-intro, .wl-site .fx-caps, .wl-site .fx-rail { z-index:7; }
+.wl-site .fx .wl-xp-cap h3 { text-shadow:0 4px 30px rgba(0,0,0,.75); }
+.wl-site .fx-intro h1 { font-size:clamp(2.4rem, 5.2vw, 4.6rem); text-shadow:0 4px 30px rgba(0,0,0,.7); }
+.wl-site .fx-intro .wl-crumb { margin-bottom:16px; }
+.wl-site .fx-intro .wl-ctas { margin-top:26px; }
+.fx.still .fx-lb, .fx.flat .fx-lb, .fx.still .fx-vig, .fx.flat .fx-vig, .fx.still .fx-scene, .fx.flat .fx-scene,
+.fx.still .fx-skip, .fx.flat .fx-skip, .fx.still .fx-end, .fx.flat .fx-end { display:none; }
+@media (prefers-reduced-motion: reduce) { .wl-site .fx-vig::after { animation:none; } }
+@media (max-width: 760px) {
+  .wl-site .fx-lb::before, .wl-site .fx-lb::after { height:calc(var(--lb, 0) * 6vh); }
+  .wl-site .fx-scene { display:none; }
+  .wl-site .fx-skip { top:calc(var(--lb, 0) * 6vh + 70px); right:16px; height:30px; font-size:12px; }
+  .wl-site .fx-end { bottom:8vh; padding:0 16px; }
+}
+/* the city stays the world, but steps back behind the words: a deeper shade on story pages, and
+   a dark wash on the caption side, as the welcome hero has */
+.wl-site:has(section.fx) .wl-shade { opacity:calc(.38 + var(--dim) * .4); }
+.wl-site .fx-vig { background:linear-gradient(90deg, rgba(5,3,4,.82) 0%, rgba(5,3,4,.55) calc(50vw - 160px), transparent calc(50vw + 160px)),
+  radial-gradient(120% 90% at 60% 50%, transparent 55%, rgba(0,0,0,.55) 100%); }
+/* the end card takes the captions' place, on the left, so the object keeps the frame */
+.wl-site .fx-end { left:max(24px, calc((100vw - var(--w-col)) / 2 + 24px)); right:auto; top:50%; bottom:auto; translate:0 -50%; align-items:flex-start; text-align:left; max-width:520px; }
+@media (max-width: 760px) { .wl-site .fx-end { left:16px; right:16px; top:auto; bottom:9vh; translate:none; } .wl-site .fx-vig { background:radial-gradient(120% 90% at 50% 40%, transparent 45%, rgba(0,0,0,.7) 100%); } }
+
+/* NO SEAM between the story and the page: the stage's bottom edge dissolves (a mask, so the
+   object, the vignette, the glow and the bars all fade together rather than stopping on a line),
+   and the progress line fades out before the stage scrolls away (wl-obj.js). The page's body band
+   then rises out of the same dark, so the story hands over without an edge. */
+.wl-site .fx-stage { -webkit-mask-image:linear-gradient(180deg, #000 0, #000 calc(100% - var(--fade, 0) * 26vh - 1px), transparent 100%);
+  mask-image:linear-gradient(180deg, #000 0, #000 calc(100% - var(--fade, 0) * 26vh - 1px), transparent 100%); }
+.wl-site .fx-prog { transition:opacity .3s; }
+.wl-site .fx + .wl-body { margin-top:-18vh; padding-top:18vh;
+  background:linear-gradient(180deg, transparent 0, rgba(5,3,4,.55) 18vh, rgba(5,3,4,.82) calc(18vh + 280px), rgba(5,3,4,.84) 50%, rgba(5,3,4,.78) calc(100% - 300px), transparent 100%); }
+.fx.still .fx-stage, .fx.flat .fx-stage { -webkit-mask-image:none; mask-image:none; }
+
+/* ---------- EVERY SCREEN ---------- */
+/* Header between a laptop and a tablet (960–1180px): seven pillar labels plus Sign in and Get
+   started do not fit one row, so Sign in moves to the phone-style menu's job (it stays in the
+   footer and on every page's CTA) and the gaps tighten. */
+@media (max-width: 1180px) and (min-width: 961px) {
+  .wl-site .wl-acts .wl-link { display:none; }
+  .wl-site .wl-links { gap:16px; font-size:13.5px; }
+  .wl-site .wl-acts { margin-left:16px; }
+  .wl-site .wl-nav { gap:16px; }
+}
+/* An upright screen (a tablet held portrait, a narrow window) gets the story as a phone does:
+   the scene fills the screen, lifted above the words, and the title and captions sit at the
+   bottom — the app's own phone rules, applied to every portrait screen up to a large tablet. */
+@media (max-width: 1100px) and (orientation: portrait) {
+  .wl-site .fx-intro { top:auto; bottom:calc(var(--lb, 0) * 6vh + 32px); translate:none; left:24px; right:24px; width:auto; max-width:640px; }
+  .wl-site .fx-intro h1 { font-size:clamp(2.2rem, 7vw, 3.6rem); }
+  .wl-site .wl-xp-caps { left:24px; right:24px; width:auto; top:auto; bottom:calc(var(--lb, 0) * 6vh + 24px); transform:none; height:auto; min-height:220px; max-width:640px; }
+  .wl-site .wl-xp-cap { top:auto; bottom:0; }
+  .wl-site .wl-xp-cap h3 { font-size:clamp(1.7rem, 5vw, 2.6rem); }
+  .wl-site .wl-xp-rail { display:none; }
+  .wl-site .wl-xp-big { top:96px; bottom:auto; right:16px; font-size:15vw; opacity:.7; }
+  .wl-site .fx-lb::before, .wl-site .fx-lb::after { height:calc(var(--lb, 0) * 6vh); }
+  .wl-site .fx-vig { background:linear-gradient(0deg, rgba(5,3,4,.88) 0%, rgba(5,3,4,.5) 38%, transparent 62%),
+    radial-gradient(120% 90% at 50% 40%, transparent 45%, rgba(0,0,0,.6) 100%); }
+  .wl-site .fx-end { left:24px; right:24px; top:auto; bottom:12vh; translate:none; }
+}
+/* A phone turned sideways (short and wide): the title and captions go compact, bottom left, the
+   breadcrumb, eyebrow and scroll cue step aside, and the scene takes the right (world.js). */
+@media (max-height: 560px) and (orientation: landscape) {
+  .wl-site .fx-intro { top:auto; bottom:calc(var(--lb, 0) * 4vh + 14px); translate:none; width:min(460px, 50vw); }
+  .wl-site .fx-intro .wl-crumb, .wl-site .fx-intro .wl-eyebrow, .wl-site .fx-cue, .wl-site .fx-scene { display:none; }
+  .wl-site .fx-intro h1 { font-size:clamp(1.5rem, 4vw, 2.3rem); }
+  .wl-site .fx-intro .wl-lede { margin-top:8px; font-size:13.5px; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .wl-site .fx-intro .wl-ctas { margin-top:12px; }
+  .wl-site .fx-intro .wl-btn.big { height:40px; padding:0 18px; font-size:14px; }
+  .wl-site .wl-xp-caps { top:auto; bottom:calc(var(--lb, 0) * 4vh + 14px); transform:none; width:min(430px, 50vw); height:auto; min-height:150px; }
+  .wl-site .wl-xp-cap { top:auto; bottom:0; }
+  .wl-site .wl-xp-cap h3 { font-size:1.35rem; margin:8px 0 6px; }
+  .wl-site .wl-xp-cap p { font-size:13px; }
+  .wl-site .wl-xp-rail { display:none; }
+  .wl-site .wl-xp-big { top:64px; bottom:auto; font-size:11vw; }
+  .wl-site .fx-lb::before, .wl-site .fx-lb::after { height:calc(var(--lb, 0) * 4vh); }
+  .wl-site .fx-skip { top:calc(var(--lb, 0) * 4vh + 64px); height:28px; font-size:11.5px; }
+  .wl-site .fx-end { top:auto; bottom:14px; translate:none; }
+  .wl-site .fx-end b { font-size:1.4rem; }
+}
+
+/* the caption's title is a styled paragraph (not a heading — see design.mjs), set exactly as the
+   welcome story's caption heading */
+.wl-site .wl-xp-cap .wl-xp-t { margin:14px 0 10px; font:700 clamp(2rem, 3.6vw, 3.3rem)/1.08 var(--wide); letter-spacing:-.01em; color:var(--w-ink); text-shadow:0 4px 30px rgba(0,0,0,.75); }
+@media (max-width: 760px) { .wl-site .wl-xp-cap .wl-xp-t { font-size:1.7rem; margin:10px 0 8px; } }
+@media (max-width: 1100px) and (orientation: portrait) { .wl-site .wl-xp-cap .wl-xp-t { font-size:clamp(1.7rem, 5vw, 2.6rem); } }
+@media (max-height: 560px) and (orientation: landscape) { .wl-site .wl-xp-cap .wl-xp-t { font-size:1.35rem; margin:8px 0 6px; } }
