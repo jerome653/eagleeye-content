@@ -986,8 +986,12 @@ const OBJBYSLUG = {
   '/compare/eagle-eye-vs-localviking/': 'scales-shield', '/compare/eagle-eye-vs-gridmybusiness/': 'scales-grid',
   '/free-tools/': 'toolbox', '/free-tools/geo-grid-checker/': 'magnifier', '/free-tools/scan-cost-calculator/': 'calculator',
 };
+// STORIES: the pinned, letterboxed 3D scroll story on every page but home. Off: the inner pages open
+// with the plain hero (crumb, title, lede, call) and go straight into their copy — the reading comes
+// first. The models, world.js and the story code stay in the repo; set true to bring the story back.
+const STORIES = false;
 const OBJFOR = (p) => {
-  if (p.home) return null;
+  if (p.home || !STORIES) return null;
   if (OBJBYSLUG[p.slug]) return OBJBYSLUG[p.slug];
   let m = p.slug.match(/^\/industries\/([^/]+)\/([^/]+)\/$/);
   if (m) return `city-${m[1]}-${m[2]}`;
@@ -1200,8 +1204,10 @@ for (const f of ['dashboard.css', 'site.css', 'site.js', 'wl-obj.js', 'world.js'
   }
 }
 // The hero objects (Blender, tools/blender/make_objects.py), and three.js for their worlds.
-await cp(join(ROOT, 'src/app/obj'), join(DIST, 'app', 'obj'), { recursive: true });
-await cp(join(ROOT, 'src/app/vendor/three'), join(DIST, 'app', 'vendor', 'three'), { recursive: true });
+if (STORIES) {
+  await cp(join(ROOT, 'src/app/obj'), join(DIST, 'app', 'obj'), { recursive: true });
+  await cp(join(ROOT, 'src/app/vendor/three'), join(DIST, 'app', 'vendor', 'three'), { recursive: true });
+}
 
 let count = 0;
 for (const p of PAGES) {
